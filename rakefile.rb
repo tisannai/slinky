@@ -16,3 +16,8 @@ end
 task :doxygen do
     sh "doxygen .doxygen"
 end
+
+task :coverage do
+    Rake::Task["gcov:all"].invoke
+    Rake::Task["utils:gcov"].invoke
+end
