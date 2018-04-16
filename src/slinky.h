@@ -51,12 +51,12 @@ typedef sl_t* sl_v;
 
 /** Extra SL type alises. */
 typedef sl_base_p slb;
-typedef sl_t sls;
-typedef sl_p slp;
-typedef sl_v sla;
+typedef sl_t      sls;
+typedef sl_p      slp;
+typedef sl_v      sla;
 
 
-#ifdef SL_MEM_API
+#ifdef SLINKY_MEM_API
 
 /*
  * SL_MEM_API allows to use custom memory allocation functions,
@@ -83,6 +83,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #endif
 
 
+/* clang-format off */
 #define slnew     sl_new
 #define sluse     sl_use
 #define sldel     sl_del
@@ -137,8 +138,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #define slrdf     sl_read_file
 #define slwrf     sl_write_file
 #define slprn     sl_print
-
-
+/* clang-format off */
 
 
 
@@ -164,10 +164,11 @@ sl_t sl_new( sl_size_t size );
  * Use existing memory allocation for SL.
  *
  * "size" is for the whole SL, including descriptor and string
- * storage. Hence string storage is 8 bytes smaller that "size".
+ * storage. Hence string storage is 8 bytes smaller that "size". Also
+ * size must be an even value.
  *
  * @param mem   Allocation for SL.
- * @param size  Allocation size.
+ * @param size  Allocation size (even number).
  *
  * @return SL.
  */
@@ -818,6 +819,29 @@ sl_t sl_write_file( sl_t ss, char* filename );
  * @param ss SL.
  */
 void sl_print( sl_t ss );
+
+
+/**
+ * Set SL as static.
+ *
+ * SL is not freed.
+ *
+ * @param ss  SL.
+ * @param val Static value.
+ */
+void sl_set_static( sl_t ss, int val );
+
+
+/**
+ * SL is static allocation.
+ *
+ * Current allocatin is not freed if resize occurs.
+ *
+ * @param ss SL.
+ *
+ * @return 1 if static (else 0).
+ */
+int sl_get_static( sl_t ss );
 
 
 #endif

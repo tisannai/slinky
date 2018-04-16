@@ -30,7 +30,7 @@ void test_basics( void )
     TEST_ASSERT( sllen( s ) == 5 );
 
     slcat( &s, s );
-    TEST_ASSERT( slrss( s ) == 11 );
+    TEST_ASSERT( slrss( s ) == 12 );
     TEST_ASSERT( sllen( s ) == 10 );
 
     s2 = sldup( s );
@@ -73,12 +73,22 @@ void test_basics( void )
     TEST_ASSERT( s2sl->len == 5 );
     sldel( &s2 );
 
-    s = sluse( malloc( 1024 ), 1024 );
+    char buf[ 24 ];
+    s = sluse( buf, 24 );
     slcpy_c( &s, t1 );
     slcat( &s, s );
     slcat_c( &s, t1 );
     TEST_ASSERT_TRUE( !strcmp( s, "text1text1text1" ) );
+    TEST_ASSERT_TRUE( sl_get_static( s ) );
+    slcat_c( &s, t1 );
+    TEST_ASSERT_FALSE( sl_get_static( s ) );
+    sl_set_static( s, 1 );
+    TEST_ASSERT_TRUE( sl_get_static( s ) );
+    sl_set_static( s, 0 );
+    TEST_ASSERT_FALSE( sl_get_static( s ) );
+    sldel( &s );
 
+    s = sluse( buf, 24 );
     sldel( &s );
 }
 
@@ -96,10 +106,10 @@ void test_sizing( void )
     TEST_ASSERT( slrss( s ) == 128 );
 
     slres( &s, 129 );
-    TEST_ASSERT( slrss( s ) == 129 );
+    TEST_ASSERT( slrss( s ) == 130 );
 
     slcom( &s );
-    TEST_ASSERT( slrss( s ) == 1 );
+    TEST_ASSERT( slrss( s ) == 2 );
 
     slres( &s, 64 );
     TEST_ASSERT( slrss( s ) == 64 );
@@ -181,13 +191,13 @@ void test_content( void )
 
     slfil( &s, 'a', 10 );
     TEST_ASSERT_TRUE( !strcmp( s, "__text1_aaaaaaaaaa" ) );
-    TEST_ASSERT( slrss( s ) == 19 );
+    TEST_ASSERT( slrss( s ) == 20 );
     TEST_ASSERT( sllen( s ) == 18 );
 
     slclr( s );
     slfil( &s, 'a', 10 );
     TEST_ASSERT_TRUE( !strcmp( s, "aaaaaaaaaa" ) );
-    TEST_ASSERT( slrss( s ) == 19 );
+    TEST_ASSERT( slrss( s ) == 20 );
     TEST_ASSERT( sllen( s ) == 10 );
 
     slclr( s );
@@ -213,12 +223,12 @@ void test_insert( void )
 
     slins_c( &s, 0, t1 );
     TEST_ASSERT_TRUE( !strcmp( s, "text1text1" ) );
-    TEST_ASSERT( slrss( s ) == 11 );
+    TEST_ASSERT( slrss( s ) == 12 );
     TEST_ASSERT( sllen( s ) == 10 );
 
     slins( &s, 128, s );
     TEST_ASSERT_TRUE( !strcmp( s, "text1text1text1text1" ) );
-    TEST_ASSERT( slrss( s ) == 21 );
+    TEST_ASSERT( slrss( s ) == 22 );
     TEST_ASSERT( sllen( s ) == 20 );
 }
 
@@ -283,7 +293,7 @@ void test_pieces( void )
     int cnt;
 
     s = slstr_c( "XYabcXYabcXY" );
-    TEST_ASSERT( slrss( s ) == 13 );
+    TEST_ASSERT( slrss( s ) == 14 );
     TEST_ASSERT( sllen( s ) == 12 );
 
     cnt = sldiv( s, 'X', -1, NULL );
@@ -321,7 +331,7 @@ void test_pieces( void )
     TEST_ASSERT_TRUE( !strcmp( pcs[ 3 ], "Y" ) );
     s2 = slglu( pcs, cnt, "H" );
     TEST_ASSERT_TRUE( !strcmp( s2, "HYabcHYabcHY" ) );
-    TEST_ASSERT( slrss( s2 ) == 13 );
+    TEST_ASSERT( slrss( s2 ) == 14 );
     TEST_ASSERT( sllen( s2 ) == 12 );
     slswp( s, 0, 'X' );
     sl_free( pcs );
@@ -334,7 +344,7 @@ void test_pieces( void )
     TEST_ASSERT_TRUE( !strcmp( pcs[ 3 ], "" ) );
     s2 = slglu( pcs, cnt, "H" );
     TEST_ASSERT_TRUE( !strcmp( s2, "XHabcXHabcXH" ) );
-    TEST_ASSERT( slrss( s2 ) == 13 );
+    TEST_ASSERT( slrss( s2 ) == 14 );
     TEST_ASSERT( sllen( s2 ) == 12 );
     slswp( s, 0, 'Y' );
     sl_free( pcs );
@@ -357,7 +367,7 @@ void test_pieces( void )
         TEST_ASSERT_TRUE( !strcmp( spc[ 2 ], "bcXY" ) );
         s2 = slglu( spc, cnt, "A" );
         TEST_ASSERT_TRUE( !strcmp( s2, "XYAbcXYAbcXY" ) );
-        TEST_ASSERT( slrss( s2 ) == 13 );
+        TEST_ASSERT( slrss( s2 ) == 14 );
         TEST_ASSERT( sllen( s2 ) == 12 );
         slswp( s, 0, 'a' );
     }
@@ -397,7 +407,7 @@ void test_pieces( void )
         TEST_ASSERT_TRUE( !strcmp( spc[ 2 ], "bcXY" ) );
         s2 = slglu( spc, cnt, "A" );
         TEST_ASSERT_TRUE( !strcmp( s2, "XYAbcXYAbcXY" ) );
-        TEST_ASSERT( slrss( s2 ) == 13 );
+        TEST_ASSERT( slrss( s2 ) == 14 );
         TEST_ASSERT( sllen( s2 ) == 12 );
         slswp( s, 0, 'a' );
     }
@@ -457,7 +467,7 @@ void test_map( void )
     sl_t s;
 
     s = slstr_c( "XYabcXYabcXY" );
-    TEST_ASSERT( slrss( s ) == 13 );
+    TEST_ASSERT( slrss( s ) == 14 );
     TEST_ASSERT( sllen( s ) == 12 );
 
     slmap( &s, "XY", "GIG" );
@@ -465,7 +475,7 @@ void test_map( void )
     sldel( &s );
 
     s = slstr_c( "XYabcXYabc" );
-    TEST_ASSERT( slrss( s ) == 11 );
+    TEST_ASSERT( slrss( s ) == 12 );
     TEST_ASSERT( sllen( s ) == 10 );
 
     slmap( &s, "XY", "GIG" );
@@ -473,7 +483,7 @@ void test_map( void )
     sldel( &s );
 
     s = slstr_c( "XYabcXYabc" );
-    TEST_ASSERT( slrss( s ) == 11 );
+    TEST_ASSERT( slrss( s ) == 12 );
     TEST_ASSERT( sllen( s ) == 10 );
 
     slmap( &s, "XY", "GG" );
@@ -494,8 +504,8 @@ line5\n\
 
     sl_t s, s2;
     s = slstr_c( filetext );
-    slwrf( s, "test_file.txt" );
-    s2 = slrdf( "test_file.txt" );
+    slwrf( s, "test/test_file.txt" );
+    s2 = slrdf( "test/test_file.txt" );
     TEST_ASSERT_TRUE( !strcmp( s2, filetext ) );
 
     slprn( s );

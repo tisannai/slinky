@@ -29,12 +29,17 @@ const char* slinky_version = "0.0.1";
 /* clang-format off */
 #define sl_malsize(s)  (sizeof(sl_s) + s)
 
+#define sl_smsk        0xFFFFFFFE
+
 #define sl_str(s)      ((char*)&(s->str[0]))
 #define sl_base(s)     ((sl_base_p)((s)-(sizeof(sl_s))))
 #define sl_len(s)      (((sl_base_p)((s)-(sizeof(sl_s))))->len)
 #define sl_len1(s)     ((((sl_base_p)((s)-(sizeof(sl_s))))->len)+1)
-#define sl_res(s)      (((sl_base_p)((s)-(sizeof(sl_s))))->res)
+#define sl_res(s)      (((sl_base_p)((s)-(sizeof(sl_s))))->res & sl_smsk)
 #define sl_end(s)      ((char*)((s)+sl_len(s)))
+
+#define sl_snor(size)  (((size) & 0x1) ? (size) + 1 : (size))
+#define sl_static(s)   (((sl_base_p)((s)-(sizeof(sl_s))))->res&0x1)
 
 #define sc_len(s)      strlen(s)
 #define sc_len1(s)     (strlen(s)+1)
@@ -70,6 +75,7 @@ static void sl_i64_to_str( int64_t i64, char* str );
 sl_t sl_new( sl_size_t size )
 {
     sl_base_p s;
+    size = sl_snor( size );
     s = (sl_base_p)sl_malloc( sl_malsize( size ) );
     s->res = size;
     s->len = 0;
@@ -80,8 +86,12 @@ sl_t sl_new( sl_size_t size )
 
 sl_t sl_use( void* mem, sl_size_t size )
 {
+    assert( ( size & 0x1 ) == 0 );
+
     sl_base_p s = mem;
     s->res = size - sizeof( sl_s );
+    /* Mark allocation as static. */
+    s->res = s->res | 0x1;
     s->len = 0;
     s->str[ 0 ] = 0;
     return sl_str( s );
@@ -90,7 +100,8 @@ sl_t sl_use( void* mem, sl_size_t size )
 
 sl_t sl_del( sl_p sp )
 {
-    sl_free( sl_base( *sp ) );
+    if ( !sl_get_static( *sp ) )
+        sl_free( sl_base( *sp ) );
     *sp = 0;
     return NULL;
 }
@@ -100,9 +111,18 @@ sl_t sl_reserve( sl_p sp, sl_size_t size )
 {
     if ( sl_res( *sp ) < size ) {
         sl_base_p s;
+        size = sl_snor( size );
         s = sl_base( *sp );
-        s = (sl_base_p)sl_realloc( s, sl_malsize( size ) );
-        s->res = size;
+        if ( sl_get_static( *sp ) ) {
+            sl_t sn;
+            sn = sl_new( size );
+            sl_len(sn) = sl_len( *sp );
+            memcpy( sn, *sp, sl_len1(sn) );
+            s = sl_base( sn );
+        } else {
+            s = (sl_base_p)sl_realloc( s, sl_malsize( size ) );
+            s->res = size;
+        }
         *sp = sl_str( s );
     }
 
@@ -114,12 +134,15 @@ sl_t sl_compact( sl_p sp )
 {
     sl_size_t len = sl_len1( *sp );
 
+    len = sl_snor( len );
     if ( sl_res( *sp ) > len ) {
         sl_base_p s;
         s = sl_base( *sp );
-        s = (sl_base_p)sl_realloc( s, sl_malsize( len ) );
-        s->res = len;
-        *sp = sl_str( s );
+        if ( !sl_get_static( *sp ) ) {
+            s = (sl_base_p)sl_realloc( s, sl_malsize( len ) );
+            s->res = len;
+            *sp = sl_str( s );
+        }
     }
 
     return *sp;
@@ -180,7 +203,7 @@ sl_t sl_duplicate( sl_t ss )
 char* sl_duplicate_c( sl_t ss )
 {
     ssize_t len1 = sl_len1( ss );
-    char* dup = sl_malloc( len1 );
+    char*   dup = sl_malloc( len1 );
     strncpy( dup, ss, len1 );
     return dup;
 }
@@ -206,7 +229,7 @@ sl_t sl_clear( sl_t ss )
 sl_t sl_from_str_c( char* cs )
 {
     sl_size_t len = sc_len1( cs );
-    sl_t       ss = sl_new( len );
+    sl_t      ss = sl_new( len );
     strncpy( ss, cs, len );
     sl_len( ss ) = len - 1;
     return ss;
@@ -216,7 +239,7 @@ sl_t sl_from_str_c( char* cs )
 sl_t sl_from_str_with_size_c( char* cs, sl_size_t size )
 {
     sl_size_t len = sc_len1( cs );
-    sl_t       ss;
+    sl_t      ss;
     if ( size > len )
         ss = sl_new( size );
     else
@@ -325,7 +348,7 @@ sl_t sl_limit_to_pos( sl_t ss, int pos )
 
 sl_t sl_cut( sl_t ss, int cnt )
 {
-    int pos;
+    int       pos;
     sl_base_p s = sl_base( ss );
     if ( cnt >= 0 ) {
         pos = s->len - cnt;
@@ -384,7 +407,7 @@ sl_t sl_insert_to_c( sl_p s1, int pos, char* s2 )
 
 sl_t sl_format( sl_p sp, char* fmt, ... )
 {
-    sl_t     ret;
+    sl_t    ret;
     va_list ap;
 
     va_start( ap, fmt );
@@ -422,7 +445,7 @@ sl_t sl_va_format( sl_p sp, char* fmt, va_list ap )
 
 sl_t sl_format_quick( sl_p sp, char* fmt, ... )
 {
-    sl_t     ret;
+    sl_t    ret;
     va_list ap;
 
     va_start( ap, fmt );
@@ -1036,6 +1059,22 @@ void sl_print( sl_t ss )
 }
 
 
+void sl_set_static( sl_t ss, int val )
+{
+    sl_base_p s = sl_base( ss );
+    if ( val != 0 )
+        s->res = s->res | 0x1;
+    else
+        s->res = s->res & sl_smsk;
+}
+
+
+int sl_get_static( sl_t ss )
+{
+    return sl_static( ss );
+}
+
+
 
 
 /* ------------------------------------------------------------
@@ -1118,7 +1157,7 @@ static sl_size_t sl_norm_idx( sl_t ss, int idx )
  *
  * @param s1   SL target.
  * @param s2   Source string.
- * @param len1 s2 length + 1
+ * @param len1 s2 length + 1.
  *
  * @return SL.
  */

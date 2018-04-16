@@ -7,10 +7,12 @@ standard C library string functions.
 Slinky String looks like a "normal" C string, but it includes a hidden
 descriptor. Descriptor is located just before string Content in
 memory. Descriptor includes storage size of string Content, and
-effective length of the string. Effective length means string
-length without the terminating null. Slinky Strings are always null
+effective length of the string. Effective length means string length
+without the terminating null. Slinky Strings are always null
 terminated. The total Slinky Allocation is sum Descriptor allocation
-plus the string storage allocation.
+plus the string storage allocation. Storage size is an even number,
+since the LSB is used to decide whether Slinky is statically allocated
+or dynamic (see below: sluse).
 
 Slinky struct:
 
@@ -32,12 +34,13 @@ front of its first character in memory.
 
 Part of the Slinky library functions mutate the string and some only
 reference it (read only access). Some of the mutating functions may
-need to allocate more space in order to fit the growing
-string. These functions require `sl_p` type to be used as argument
-type. `sl_p` is a pointer to `sl_t`. `sl_p` is needed since Slinky String
-might appear in different memory address after resizing. Even when
-the argument have to be of `sl_p` type, the return value is still of
-`sl_t` type. This makes use of Slinky more convenient.
+need to allocate more space in order to fit the growing string. These
+functions require `sl_p` type, Slinky Reference, to be used as
+argument type. `sl_p` is a pointer to `sl_t`. `sl_p` is needed since
+Slinky String might appear in different memory address after
+resizing. Even when the argument have to be of `sl_p` type, the return
+value is still of `sl_t` type. This makes use of Slinky more
+convenient.
 
 Some Slinky library functions may use both Slinky and CSTR type
 arguments. These functions use `char*` as argument type, since Slinky
@@ -84,10 +87,14 @@ Then you can take that into use with:
 
     ss = sluse( buf, 128 );
 
-Note that stack allocated Slinky can't be enlarged, hence user must take
-care that this does not happen. Also note that Slinky does not (in this
-case) fit a string that has 127 characters (plus null). It will only
-fit 119 plus null, since the descriptor takes 8 bytes of space.
+When Slinky is taken into use through `sluse` it is marked as
+"static", and means that it will not be freed with `sldel`. Stack
+allocated Slinky is automatically changed to a heap allocated Slinky
+if Slinky requires resizing. This is quite powerful optimization,
+since often stack allocated strings are enough and heap reservation
+(which is slowish) is not needed. `sldel` can be called for Slinky
+whether its "static" or not. If Slinky is "static", no memory is
+released, but Slinky is set to NULL.
 
 By default Slinky library uses malloc and friends to do heap
 allocations. If you define SL_MEM_API, you can use your own memory
