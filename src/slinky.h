@@ -822,26 +822,26 @@ void sl_print( sl_t ss );
 
 
 /**
- * Set SL as static.
+ * Set SL as local.
  *
  * SL is not freed.
  *
  * @param ss  SL.
- * @param val Static value.
+ * @param val Local value.
  */
-void sl_set_static( sl_t ss, int val );
+void sl_set_local( sl_t ss, int val );
 
 
 /**
- * SL is static allocation.
+ * Return SL local mode.
  *
  * Current allocatin is not freed if resize occurs.
  *
  * @param ss SL.
  *
- * @return 1 if static (else 0).
+ * @return 1 if local (else 0).
  */
-int sl_get_static( sl_t ss );
+int sl_get_local( sl_t ss );
 
 
 #endif

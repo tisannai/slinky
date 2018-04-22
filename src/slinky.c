@@ -39,7 +39,7 @@ const char* slinky_version = "0.0.1";
 #define sl_end(s)      ((char*)((s)+sl_len(s)))
 
 #define sl_snor(size)  (((size) & 0x1) ? (size) + 1 : (size))
-#define sl_static(s)   (((sl_base_p)((s)-(sizeof(sl_s))))->res&0x1)
+#define sl_local(s)    (((sl_base_p)((s)-(sizeof(sl_s))))->res&0x1)
 
 #define sc_len(s)      strlen(s)
 #define sc_len1(s)     (strlen(s)+1)
@@ -100,7 +100,7 @@ sl_t sl_use( void* mem, sl_size_t size )
 
 sl_t sl_del( sl_p sp )
 {
-    if ( !sl_get_static( *sp ) )
+    if ( !sl_get_local( *sp ) )
         sl_free( sl_base( *sp ) );
     *sp = 0;
     return NULL;
@@ -113,7 +113,7 @@ sl_t sl_reserve( sl_p sp, sl_size_t size )
         sl_base_p s;
         size = sl_snor( size );
         s = sl_base( *sp );
-        if ( sl_get_static( *sp ) ) {
+        if ( sl_get_local( *sp ) ) {
             sl_t sn;
             sn = sl_new( size );
             sl_len(sn) = sl_len( *sp );
@@ -138,7 +138,7 @@ sl_t sl_compact( sl_p sp )
     if ( sl_res( *sp ) > len ) {
         sl_base_p s;
         s = sl_base( *sp );
-        if ( !sl_get_static( *sp ) ) {
+        if ( !sl_get_local( *sp ) ) {
             s = (sl_base_p)sl_realloc( s, sl_malsize( len ) );
             s->res = len;
             *sp = sl_str( s );
@@ -1059,7 +1059,7 @@ void sl_print( sl_t ss )
 }
 
 
-void sl_set_static( sl_t ss, int val )
+void sl_set_local( sl_t ss, int val )
 {
     sl_base_p s = sl_base( ss );
     if ( val != 0 )
@@ -1069,9 +1069,9 @@ void sl_set_static( sl_t ss, int val )
 }
 
 
-int sl_get_static( sl_t ss )
+int sl_get_local( sl_t ss )
 {
-    return sl_static( ss );
+    return sl_local( ss );
 }
 
 

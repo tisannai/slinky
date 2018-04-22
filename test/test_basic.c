@@ -79,13 +79,13 @@ void test_basics( void )
     slcat( &s, s );
     slcat_c( &s, t1 );
     TEST_ASSERT_TRUE( !strcmp( s, "text1text1text1" ) );
-    TEST_ASSERT_TRUE( sl_get_static( s ) );
+    TEST_ASSERT_TRUE( sl_get_local( s ) );
     slcat_c( &s, t1 );
-    TEST_ASSERT_FALSE( sl_get_static( s ) );
-    sl_set_static( s, 1 );
-    TEST_ASSERT_TRUE( sl_get_static( s ) );
-    sl_set_static( s, 0 );
-    TEST_ASSERT_FALSE( sl_get_static( s ) );
+    TEST_ASSERT_FALSE( sl_get_local( s ) );
+    sl_set_local( s, 1 );
+    TEST_ASSERT_TRUE( sl_get_local( s ) );
+    sl_set_local( s, 0 );
+    TEST_ASSERT_FALSE( sl_get_local( s ) );
     sldel( &s );
 
     s = sluse( buf, 24 );
