@@ -77,8 +77,8 @@ Any heap allocated Slinky should be de-allocated after use.
 De-allocation takes `sl_p` type argument in order to ensure that Slinky
 becomes NULL after memory free.
 
-Slinky can also be used within stack allocated strings. First you have to
-have some stack storage available.
+Slinky can also be used within stack allocated memory. First you have
+to have some stack storage available.
 
     char buf[ 128 ];
     sl_t ss;
@@ -87,14 +87,14 @@ Then you can take that into use with:
 
     ss = sluse( buf, 128 );
 
-When Slinky is taken into use through `sluse` it is marked as "local",
-and means that it will not be freed with `sldel`. Stack allocated
-Slinky is automatically changed to a heap allocated Slinky if Slinky
-requires resizing. This is quite powerful optimization, since often
-stack allocated strings are enough and heap reservation (which is
-slowish) is not needed. `sldel` can be called for Slinky whether its
-"local" or not. If Slinky is "local", no memory is released, but
-Slinky is set to NULL.
+When Slinky is taken into use through `sluse` it is marked as
+"local". This means that it will not be freed with `sldel`. Stack
+allocated Slinky is automatically changed to a heap allocated Slinky
+if Slinky requires resizing. This is quite powerful optimization,
+since often stack allocated strings are enough and heap reservation
+(which is slowish) is not needed. `sldel` can be called for Slinky
+whether its "local" or not. If Slinky is "local", no memory is
+released, but Slinky is set to NULL.
 
 By default Slinky library uses malloc and friends to do heap
 allocations. If you define SL_MEM_API, you can use your own memory

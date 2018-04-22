@@ -28,7 +28,7 @@ extern const char* slinky_version;
 /** Size type. */
 typedef uint32_t sl_size_t;
 
-/** SL structure. */
+/** Slinky structure. */
 typedef struct
 {
     sl_size_t res;      /**< String storage size. */
@@ -37,19 +37,19 @@ typedef struct
 } sl_s;
 
 
-/** Pointer to SL. */
+/** Pointer to Slinky. */
 typedef sl_s* sl_base_p;
 
-/** Type for SL String. */
+/** Type for Slinky String. */
 typedef char* sl_t;
 
-/** Handle for mutable SL. */
+/** Handle for mutable Slinky. */
 typedef sl_t* sl_p;
 
-/** SL array type. */
+/** Slinky array type. */
 typedef sl_t* sl_v;
 
-/** Extra SL type alises. */
+/** Extra Slinky type alises. */
 typedef sl_base_p slb;
 typedef sl_t      sls;
 typedef sl_p      slp;
@@ -149,36 +149,36 @@ extern void* sl_realloc( void* ptr, size_t size );
 
 
 /**
- * Create new SL.
+ * Create new Slinky.
  *
  * Storage size should be at least string length + 1.
  *
  * @param size String storage size.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_new( sl_size_t size );
 
 
 /**
- * Use existing memory allocation for SL.
+ * Use existing memory allocation for Slinky.
  *
- * "size" is for the whole SL, including descriptor and string
+ * "size" is for the whole Slinky, including descriptor and string
  * storage. Hence string storage is 8 bytes smaller that "size". Also
  * size must be an even value.
  *
- * @param mem   Allocation for SL.
+ * @param mem   Allocation for Slinky.
  * @param size  Allocation size (even number).
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_use( void* mem, sl_size_t size );
 
 
 /**
- * Delete SL.
+ * Delete Slinky.
  *
- * @param ss SLP.
+ * @param ss Slinky Reference.
  *
  * @return NULL
  */
@@ -186,14 +186,14 @@ sl_t sl_del( sl_p sp );
 
 
 /**
- * Update SL storage to size.
+ * Update Slinky storage to size.
  *
  * If current storage is bigger, do nothing.
  *
- * @param sp   SLP.
+ * @param sp   Slinky Reference.
  * @param size Storage size.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_reserve( sl_p sp, sl_size_t size );
 
@@ -203,73 +203,73 @@ sl_t sl_reserve( sl_p sp, sl_size_t size );
  *
  * Minimum is string length + 1.
  *
- * @param sp SLP.
+ * @param sp Slinky Reference.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_compact( sl_p sp );
 
 
 /**
- * Copy SL content from another SL.
+ * Copy Slinky content from another Slinky.
  *
- * @param s1 SLP.
- * @param s2 SL.
+ * @param s1 Slinky Reference.
+ * @param s2 Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_copy( sl_p s1, sl_t s2 );
 
 
 /**
- * Copy SL content from CSTR.
+ * Copy Slinky content from CSTR.
  *
- * @param s1 SLP.
- * @param s2 SL.
+ * @param s1 Slinky Reference.
+ * @param s2 Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_copy_c( sl_p s1, char* s2 );
 
 
 /**
- * Fill (append) SL with character by "cnt" times.
+ * Fill (append) Slinky with character by "cnt" times.
  *
- * @param sp  SLP.
+ * @param sp  Slinky Reference.
  * @param c   Char for filling.
  * @param cnt Fill count.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_fill_with_char( sl_p sp, char c, sl_size_t cnt );
 
 
 /**
- * Fill (append) SL with string by "cnt" times.
+ * Fill (append) Slinky with string by "cnt" times.
  *
- * @param sp  SLP.
+ * @param sp  Slinky Reference.
  * @param cs  CSTR for filling.
  * @param cnt Fill count.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_multiple_str_append( sl_p sp, char* cs, sl_size_t cnt );
 
 
 /**
- * Duplicate SL, using same storage as original.
+ * Duplicate Slinky, using same storage as original.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_duplicate( sl_t ss );
 
 
 /**
- * Duplicate SL as CSTR.
+ * Duplicate Slinky as CSTR.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
  * @return CSTR.
  */
@@ -277,54 +277,54 @@ char* sl_duplicate_c( sl_t ss );
 
 
 /**
- * Replicate (duplicate) SL, using mininum storage.
+ * Replicate (duplicate) Slinky, using mininum storage.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_replicate( sl_t ss );
 
 
 /**
- * Clear content of SL.
+ * Clear content of Slinky.
  *
  * Set string length to 0. No change to storage.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_clear( sl_t ss );
 
 
 /**
- * Create SL based on CSTR with size from CSTR.
+ * Create Slinky based on CSTR with size from CSTR.
  *
  * @param cs CSTR.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_from_str_c( char* cs );
 
 
 /**
- * Create SL based on CSTR with given size.
+ * Create Slinky based on CSTR with given size.
  *
  * Size is enlarged if CSTR is longer than given size.
  *
  * @param cs    CSTR.
  * @param size  Storage size.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_from_str_with_size_c( char* cs, sl_size_t size );
 
 
 /**
- * Return SL length.
+ * Return Slinky length.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
  * @return Length.
  */
@@ -332,11 +332,11 @@ sl_size_t sl_length( sl_t ss );
 
 
 /**
- * Return SL storage size.
+ * Return Slinky storage size.
  *
  * Storage size is the string content storage.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
  * @return Storage size.
  */
@@ -344,9 +344,9 @@ sl_size_t sl_reservation_size( sl_t ss );
 
 
 /**
- * Return SL base type.
+ * Return Slinky base type.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
  * @return Base type.
  */
@@ -354,9 +354,9 @@ slb sl_base_ptr( sl_t ss );
 
 
 /**
- * Return last character in SL.
+ * Return last character in Slinky.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
  * @return Last char (or NULL).
  */
@@ -364,10 +364,10 @@ char sl_end_char( sl_t ss );
 
 
 /**
- * Compare two SL.
+ * Compare two Slinky.
  *
- * @param s1 Reference SL.
- * @param s2 Compared SL.
+ * @param s1 Reference Slinky.
+ * @param s2 Compared Slinky.
  *
  * @return -1,0,1 (see strcmp).
  */
@@ -375,10 +375,10 @@ int sl_compare( sl_t s1, sl_t s2 );
 
 
 /**
- * Are two SL strings different?
+ * Are two Slinky strings different?
  *
- * @param s1 Reference SL.
- * @param s2 Compared SL.
+ * @param s1 Reference Slinky.
+ * @param s2 Compared Slinky.
  *
  * @return 1 if different.
  */
@@ -386,32 +386,32 @@ int sl_is_different( sl_t s1, sl_t s2 );
 
 
 /**
- * Sort SL array to alphabetical order.
+ * Sort Slinky array to alphabetical order.
  *
- * @param sa   SL array.
- * @param len  SL array length.
+ * @param sa   Slinky array.
+ * @param len  Slinky array length.
  */
 void sl_sort( sl_v sa, sl_size_t len );
 
 
 /**
- * Concatenate SL to SL.
+ * Concatenate Slinky to Slinky.
  *
- * @param s1 SLP.
- * @param s2 SL to add.
+ * @param s1 Slinky Reference.
+ * @param s2 Slinky to add.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_concatenate( sl_p s1, sl_t s2 );
 
 
 /**
- * Concatenate CSTR to SL.
+ * Concatenate CSTR to Slinky.
  *
- * @param s1 SLP.
+ * @param s1 Slinky Reference.
  * @param s2 CSTR to add.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_concatenate_c( sl_p s1, char* s2 );
 
@@ -421,10 +421,10 @@ sl_t sl_concatenate_c( sl_p s1, char* s2 );
  *
  * Pos can be positive or negative.
  *
- * @param sp  SLP.
+ * @param sp  Slinky Reference.
  * @param pos Pos.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_push_char_to( sl_p sp, int pos, char c );
 
@@ -434,10 +434,10 @@ sl_t sl_push_char_to( sl_p sp, int pos, char c );
  *
  * Pos can be positive or negative.
  *
- * @param ss  SL.
+ * @param ss  Slinky.
  * @param pos Pos.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_pop_char_from( sl_t ss, int pos );
 
@@ -447,10 +447,10 @@ sl_t sl_pop_char_from( sl_t ss, int pos );
  *
  * Tail is removed and string length becomes same as pos.
  *
- * @param ss  SL.
+ * @param ss  Slinky.
  * @param pos Pos.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_limit_to_pos( sl_t ss, int pos );
 
@@ -461,36 +461,36 @@ sl_t sl_limit_to_pos( sl_t ss, int pos );
  * With positive "cnt", cut off "cnt" characters from end.
  * With negative "cnt", cut off "cnt" characters from start.
  *
- * @param ss   SL.
+ * @param ss   Slinky.
  * @param cnt  Cut cnt.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_cut( sl_t ss, int cnt );
 
 
 /**
- * Select a slice from SL and mutate SL.
+ * Select a slice from Slinky and mutate Slinky.
  *
  * Positive index is from start and negative from end of
  * string. sl_tel() is not sensitive to the order of boundaries. End
  * index is exclusive.
  *
- * @param ss   SL.
+ * @param ss   Slinky.
  * @param a    A boundary.
  * @param b    B boundary.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_select_slice( sl_t ss, int a, int b );
 
 
 /**
- * Insert SL into another SL.
+ * Insert Slinky into another Slinky.
  *
- * @param s1  Target SLP.
+ * @param s1  Target Slinky Reference.
  * @param pos Insertion position.
- * @param s2  Inserted SL.
+ * @param s2  Inserted Slinky.
  *
  * @return Target.
  */
@@ -498,9 +498,9 @@ sl_t sl_insert_to( sl_p s1, int pos, sl_t s2 );
 
 
 /**
- * Insert CSTR into SL.
+ * Insert CSTR into Slinky.
  *
- * @param s1  Target SLP.
+ * @param s1  Target Slinky Reference.
  * @param pos Insertion position.
  * @param s2  Inserted CSTR.
  *
@@ -510,12 +510,12 @@ sl_t sl_insert_to_c( sl_p s1, int pos, char* s2 );
 
 
 /**
- * Formatted (printf style) print to SL.
+ * Formatted (printf style) print to Slinky.
  *
- * @param sp   SLP.
+ * @param sp   Slinky Reference.
  * @param fmt  Format.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_format( sl_p sp, char* fmt, ... );
 
@@ -523,23 +523,23 @@ sl_t sl_format( sl_p sp, char* fmt, ... );
 /**
  * Variable Arguments (VA) version of slfmt().
  *
- * @param sp  SLP.
+ * @param sp  Slinky Reference.
  * @param fmt Format.
  * @param ap  VA list.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_va_format( sl_p sp, char* fmt, va_list ap );
 
 
 /**
- * Quick Formatted print to SL.
+ * Quick Formatted print to Slinky.
  *
  * Quick Format is close to printf format, but is significantly
  * reduced and faster.
  *
  *     %s = C string.
- *     %S = SL string.
+ *     %S = Slinky string.
  *     %i = Integer.
  *     %I = 64-bit integer.
  *     %u = Unsigned integer.
@@ -547,10 +547,10 @@ sl_t sl_va_format( sl_p sp, char* fmt, va_list ap );
  *     %c = Character.
  *     %% = Literal '%'.
  *
- * @param sp   SLP.
+ * @param sp   Slinky Reference.
  * @param fmt  Quick Format.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_format_quick( sl_p sp, char* fmt, ... );
 
@@ -558,11 +558,11 @@ sl_t sl_format_quick( sl_p sp, char* fmt, ... );
 /**
  * Variable Arguments (VA) version of slfmq().
  *
- * @param sp  SLP.
+ * @param sp  Slinky Reference.
  * @param fmt Quick Format.
  * @param ap  VA list.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_va_format_quick( sl_p sp, char* fmt, va_list ap );
 
@@ -573,7 +573,7 @@ sl_t sl_va_format_quick( sl_p sp, char* fmt, va_list ap );
  * Positive index is converted to negative and vice versa. Logical
  * position is same for inverted and non-inverted indeces.
  *
- * @param ss  SL.
+ * @param ss  Slinky.
  * @param pos Pos.
  *
  * @return Inverted pos.
@@ -584,7 +584,7 @@ int sl_invert_pos( sl_t ss, int pos );
 /**
  * Find char towards right.
  *
- * @param ss  SL.
+ * @param ss  Slinky.
  * @param c   Char to find.
  * @param pos Search start pos.
  *
@@ -596,7 +596,7 @@ int sl_find_char_right( sl_t ss, char c, sl_size_t pos );
 /**
  * Find char towards left.
  *
- * @param ss  SL.
+ * @param ss  Slinky.
  * @param c   Char to find.
  * @param pos Search start pos.
  *
@@ -608,7 +608,7 @@ int sl_find_char_left( sl_t ss, char c, sl_size_t pos );
 /**
  * Find "s2" from "s1". Return position or -1 if not found.
  *
- * "s2" can be SL or CSTR.
+ * "s2" can be Slinky or CSTR.
  *
  * @param s1  Base.
  * @param s2  Find.
@@ -619,18 +619,18 @@ int sl_find_index( sl_t s1, char* s2 );
 
 
 /**
- * Divide (split) SL to pieces by character "c".
+ * Divide (split) Slinky to pieces by character "c".
  *
  * Return the number of pieces after split. Pieces are stored to array
- * pointed by "div". If character "c" hits the last char of SL, the
+ * pointed by "div". If character "c" hits the last char of Slinky, the
  * last piece will be of length 0.
  *
- * SL will be modified by replacing "c" with 0. This can be cancelled
- * with sl_twp() or user can use a duplicate SL, which does not require
+ * Slinky will be modified by replacing "c" with 0. This can be cancelled
+ * with sl_twp() or user can use a duplicate Slinky, which does not require
  * fixing.
  *
  * If called with "size" < 0, return only the number of parts. No
- * modification is done to SL.
+ * modification is done to Slinky.
  *
  * If called with "*div" != NULL, fill the pre-allocated "div".
  *
@@ -638,7 +638,7 @@ int sl_find_index( sl_t s1, char* s2 );
  * should be freed by the user when done. In this case, "size" is
  * dont-care and will be calculated for the user.
  *
- * @param ss   SL.
+ * @param ss   Slinky.
  * @param c    Char to split with.
  * @param size Size of div storage (-1 for na).
  * @param div  Address of div storage.
@@ -653,7 +653,7 @@ int sl_divide_with_char( sl_t ss, char c, int size, char*** div );
  *
  * Both sldiv() and sl_teg() terminates the segment with single 0.
  *
- * @param ss   SL.
+ * @param ss   Slinky.
  * @param sc   CSTR to split with.
  * @param size Size of div storage (-1 for na).
  * @param div  Address of div storage.
@@ -670,7 +670,7 @@ int sl_segment_with_str( sl_t ss, char* sc, int size, char*** div );
  * @param size Str array size.
  * @param glu  Glue string.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_glue_array( sl_v sa, sl_size_t size, char* glu );
 
@@ -694,7 +694,7 @@ sl_t sl_glue_array( sl_v sa, sl_size_t size, char* glu );
  *   t = sltok( s, delim, &pos );
  *   t = sltok( s, delim, &pos );
  *
- * @param ss     SL.
+ * @param ss     Slinky.
  * @param delim  Token delimiter.
  * @param pos    Iteration state.
  *
@@ -706,9 +706,9 @@ char* sl_tokenize( sl_t ss, char* delim, char** pos );
 /**
  * Drop the extension "ext" from "ss".
  *
- * @param ss  SL.
+ * @param ss  Slinky.
  * @param ext Extension (i.e. file suffix).
- * @return Updated SL (or NULL if no ext found).
+ * @return Updated Slinky (or NULL if no ext found).
  */
 sl_t sl_rm_extension( sl_t ss, char* ext );
 
@@ -716,9 +716,9 @@ sl_t sl_rm_extension( sl_t ss, char* ext );
 /**
  * Change to dirname, i.e. take out the basename.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_directory_name( sl_t ss );
 
@@ -727,23 +727,23 @@ sl_t sl_directory_name( sl_t ss );
  * Change to basename (file basename), i.e. take out the directory
  * part.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_basename( sl_t ss );
 
 
 /**
- * Swap (repair) SL by mapping "f" char to "t" char.
+ * Swap (repair) Slinky by mapping "f" char to "t" char.
  *
  * Useful to cleanup after sldiv() or sl_teg().
  *
- * @param ss SL.
+ * @param ss Slinky.
  * @param f  From char.
  * @param t  To char.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_swap_chars( sl_t ss, char f, char t );
 
@@ -751,93 +751,93 @@ sl_t sl_swap_chars( sl_t ss, char f, char t );
 /**
  * Map (replace) string "f" to "t" in "ss".
  *
- * "f" and "t" can be either SL or CSTR.
+ * "f" and "t" can be either Slinky or CSTR.
  *
- * @param sp SLP.
+ * @param sp Slinky Reference.
  * @param f  From string.
  * @param t  To string.
  *
- * @return SL
+ * @return Slinky
  */
 sl_t sl_map_str( sl_p sp, char* f, char* t );
 
 
 /**
- * Capitalize SL, i.e. upcase the first letter.
+ * Capitalize Slinky, i.e. upcase the first letter.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_capitalize( sl_t ss );
 
 
 /**
- * Convert SL to upper case letters.
+ * Convert Slinky to upper case letters.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_toupper( sl_t ss );
 
 
 /**
- * Convert SL to lower case letters.
+ * Convert Slinky to lower case letters.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_tolower( sl_t ss );
 
 
 /**
- * Read complete file and return SL containing the file content.
+ * Read complete file and return Slinky containing the file content.
  *
  * @param filename Name of file.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_read_file( char* filename );
 
 
 /**
- * Write SL content to file.
+ * Write Slinky content to file.
  *
- * @param ss       SL including file content.
+ * @param ss       Slinky including file content.
  * @param filename File to write to.
  *
- * @return SL.
+ * @return Slinky.
  */
 sl_t sl_write_file( sl_t ss, char* filename );
 
 
 /**
- * Display SL content.
+ * Display Slinky content.
  *
- * @param ss SL.
+ * @param ss Slinky.
  */
 void sl_print( sl_t ss );
 
 
 /**
- * Set SL as local.
+ * Set Slinky as local.
  *
- * SL is not freed.
+ * Slinky is not freed.
  *
- * @param ss  SL.
+ * @param ss  Slinky.
  * @param val Local value.
  */
 void sl_set_local( sl_t ss, int val );
 
 
 /**
- * Return SL local mode.
+ * Return Slinky local mode.
  *
  * Current allocatin is not freed if resize occurs.
  *
- * @param ss SL.
+ * @param ss Slinky.
  *
  * @return 1 if local (else 0).
  */
