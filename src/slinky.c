@@ -27,6 +27,8 @@ const char* slinky_version = "0.0.1";
  * ------------------------------------------------------------ */
 
 /* clang-format off */
+
+/** @cond slinky_none */
 #define sl_malsize(s)  (sizeof(sl_s) + s)
 
 #define sl_smsk        0xFFFFFFFE
@@ -43,6 +45,9 @@ const char* slinky_version = "0.0.1";
 
 #define sc_len(s)      strlen(s)
 #define sc_len1(s)     (strlen(s)+1)
+
+/** @endcond slinky_none */
+
 /* clang-format on */
 
 

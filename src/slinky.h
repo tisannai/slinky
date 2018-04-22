@@ -49,11 +49,12 @@ typedef sl_t* sl_p;
 /** Slinky array type. */
 typedef sl_t* sl_v;
 
-/** Extra Slinky type alises. */
+/** @{ Extra Slinky type alises. */
 typedef sl_base_p slb;
 typedef sl_t      sls;
 typedef sl_p      slp;
 typedef sl_v      sla;
+/** @} */
 
 
 #ifdef SLINKY_MEM_API
@@ -76,12 +77,16 @@ extern void* sl_realloc( void* ptr, size_t size );
 
 /* Default to regular memory management functions. */
 
+/** @cond slinky_none */
 #define sl_malloc malloc
 #define sl_free free
 #define sl_realloc realloc
+/** @endcond slinky_none */
 
 #endif
 
+
+/** @cond slinky_none */
 
 /* clang-format off */
 #define slnew     sl_new
@@ -140,6 +145,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #define slprn     sl_print
 /* clang-format off */
 
+/** @endcond slinky_none */
 
 
 
@@ -178,7 +184,7 @@ sl_t sl_use( void* mem, sl_size_t size );
 /**
  * Delete Slinky.
  *
- * @param ss Slinky Reference.
+ * @param sp Slinky Reference.
  *
  * @return NULL
  */
@@ -423,6 +429,7 @@ sl_t sl_concatenate_c( sl_p s1, char* s2 );
  *
  * @param sp  Slinky Reference.
  * @param pos Pos.
+ * @param c   Char to push.
  *
  * @return Slinky.
  */
