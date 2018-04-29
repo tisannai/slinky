@@ -109,6 +109,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #define slptr     sl_base_ptr
 #define slend     sl_end_char
 #define slcmp     sl_compare
+#define slsme     sl_is_same
 #define sldff     sl_is_different
 #define slsrt     sl_sort
 #define slcat     sl_concatenate
@@ -378,6 +379,17 @@ char sl_end_char( sl_t ss );
  * @return -1,0,1 (see strcmp).
  */
 int sl_compare( sl_t s1, sl_t s2 );
+
+
+/**
+ * Are two Slinky strings same?
+ *
+ * @param s1 Reference Slinky.
+ * @param s2 Compared Slinky.
+ *
+ * @return 1 if same.
+ */
+int sl_is_same( sl_t s1, sl_t s2 );
 
 
 /**

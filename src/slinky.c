@@ -287,6 +287,16 @@ int sl_compare( sl_t s1, sl_t s2 )
 }
 
 
+int sl_is_same( sl_t s1, sl_t s2 )
+{
+    if ( sl_len( s1 ) == sl_len( s2 ) &&
+         strcmp( s1, s2 ) == 0 )
+        return 1;
+    else
+        return 0;
+}
+
+
 int sl_is_different( sl_t s1, sl_t s2 )
 {
     if ( sl_len( s1 ) != sl_len( s2 ) )

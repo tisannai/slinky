@@ -43,8 +43,10 @@ void test_basics( void )
 
     s2 = slrep( s );
     TEST_ASSERT_TRUE( !sldff( s, s2 ) );
+    TEST_ASSERT_TRUE( slsme( s, s2 ) );
     slfil( &s2, 'a', 1 );
     TEST_ASSERT_TRUE( sldff( s, s2 ) );
+    TEST_ASSERT_FALSE( slsme( s, s2 ) );
     slpop( s2, 0 );
     TEST_ASSERT_TRUE( sldff( s, s2 ) );
     /* "ext1text1a" */
