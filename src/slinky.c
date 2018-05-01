@@ -121,8 +121,8 @@ sl_t sl_reserve( sl_p sp, sl_size_t size )
         if ( sl_get_local( *sp ) ) {
             sl_t sn;
             sn = sl_new( size );
-            sl_len(sn) = sl_len( *sp );
-            memcpy( sn, *sp, sl_len1(sn) );
+            sl_len( sn ) = sl_len( *sp );
+            memcpy( sn, *sp, sl_len1( sn ) );
             s = sl_base( sn );
         } else {
             s = (sl_base_p)sl_realloc( s, sl_malsize( size ) );
@@ -289,8 +289,7 @@ int sl_compare( sl_t s1, sl_t s2 )
 
 int sl_is_same( sl_t s1, sl_t s2 )
 {
-    if ( sl_len( s1 ) == sl_len( s2 ) &&
-         strcmp( s1, s2 ) == 0 )
+    if ( ( sl_len( s1 ) == sl_len( s2 ) ) && ( strcmp( s1, s2 ) == 0 ) )
         return 1;
     else
         return 0;
