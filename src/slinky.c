@@ -254,6 +254,15 @@ sl_t sl_from_str_with_size_c( char* cs, sl_size_t size )
 }
 
 
+sl_t sl_refresh( sl_t ss )
+{
+    sl_size_t len = sc_len1( ss );
+    assert( len <= sl_res( ss ) );
+    sl_len( ss ) = len - 1;
+    return ss;
+}
+
+
 sl_size_t sl_length( sl_t ss )
 {
     return sl_len( ss );
@@ -419,7 +428,7 @@ sl_t sl_insert_to_c( sl_p s1, int pos, char* s2 )
 }
 
 
-sl_t sl_format( sl_p sp, char* fmt, ... )
+sl_t sl_format( sl_p sp, const char* fmt, ... )
 {
     sl_t    ret;
     va_list ap;
@@ -432,7 +441,7 @@ sl_t sl_format( sl_p sp, char* fmt, ... )
 }
 
 
-sl_t sl_va_format( sl_p sp, char* fmt, va_list ap )
+sl_t sl_va_format( sl_p sp, const char* fmt, va_list ap )
 {
     va_list coap;
 
@@ -457,7 +466,7 @@ sl_t sl_va_format( sl_p sp, char* fmt, va_list ap )
 }
 
 
-sl_t sl_format_quick( sl_p sp, char* fmt, ... )
+sl_t sl_format_quick( sl_p sp, const char* fmt, ... )
 {
     sl_t    ret;
     va_list ap;
@@ -470,7 +479,7 @@ sl_t sl_format_quick( sl_p sp, char* fmt, ... )
 }
 
 
-sl_t sl_va_format_quick( sl_p sp, char* fmt, va_list ap )
+sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
 {
     va_list coap;
 
@@ -484,7 +493,7 @@ sl_t sl_va_format_quick( sl_p sp, char* fmt, va_list ap )
      * Calculate string size.
      */
 
-    char*    c;
+    const char* c;
     char*    ts;
     int64_t  i64;
     uint64_t u64;
@@ -1027,7 +1036,7 @@ sl_t sl_tolower( sl_t ss )
 }
 
 
-sl_t sl_read_file( char* filename )
+sl_t sl_read_file( const char* filename )
 {
     sl_t ss;
 
@@ -1051,7 +1060,7 @@ sl_t sl_read_file( char* filename )
 }
 
 
-sl_t sl_write_file( sl_t ss, char* filename )
+sl_t sl_write_file( sl_t ss, const char* filename )
 {
     int fd;
 

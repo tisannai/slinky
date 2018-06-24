@@ -57,6 +57,8 @@ typedef sl_v      sla;
 /** @} */
 
 
+/* clang-format off */
+
 #ifdef SLINKY_MEM_API
 
 /*
@@ -73,17 +75,31 @@ extern void* sl_malloc( size_t size );
 extern void sl_free( void* ptr );
 extern void* sl_realloc( void* ptr, size_t size );
 
-#else
+#else /* SLINKY_MEM_API */
+
+
+#    if SIXTEN_USE_MEM == 1
+
+#        define sl_malloc st_alloc
+#        define sl_free st_del
+#        define sl_realloc st_realloc
+
+
+#    else /* SIXTEN_USE_MEM == 1 */
 
 /* Default to regular memory management functions. */
-
 /** @cond slinky_none */
-#define sl_malloc malloc
-#define sl_free free
-#define sl_realloc realloc
+#        define sl_malloc malloc
+#        define sl_free free
+#        define sl_realloc realloc
 /** @endcond slinky_none */
 
-#endif
+#    endif /* SIXTEN_USE_MEM == 1 */
+
+#endif /* SLINKY_MEM_API */
+
+/* clang-format on */
+
 
 
 /** @cond slinky_none */
@@ -104,6 +120,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #define slclr     sl_clear
 #define slstr_c   sl_from_str_c
 #define slsiz_c   sl_from_str_with_size_c
+#define slref     sl_refresh
 #define sllen     sl_length
 #define slrss     sl_reservation_size
 #define slptr     sl_base_ptr
@@ -329,6 +346,19 @@ sl_t sl_from_str_with_size_c( char* cs, sl_size_t size );
 
 
 /**
+ * Refresh Slinky length.
+ *
+ * Useful when some function has filled string content and it should
+ * be in sync with the Slinky itself.
+ *
+ * @param sp Slinky.
+ *
+ * @return Slinky.
+ */
+sl_t sl_refresh( sl_t ss );
+
+
+/**
  * Return Slinky length.
  *
  * @param ss Slinky.
@@ -536,7 +566,7 @@ sl_t sl_insert_to_c( sl_p s1, int pos, char* s2 );
  *
  * @return Slinky.
  */
-sl_t sl_format( sl_p sp, char* fmt, ... );
+sl_t sl_format( sl_p sp, const char* fmt, ... );
 
 
 /**
@@ -548,7 +578,7 @@ sl_t sl_format( sl_p sp, char* fmt, ... );
  *
  * @return Slinky.
  */
-sl_t sl_va_format( sl_p sp, char* fmt, va_list ap );
+sl_t sl_va_format( sl_p sp, const char* fmt, va_list ap );
 
 
 /**
@@ -571,7 +601,7 @@ sl_t sl_va_format( sl_p sp, char* fmt, va_list ap );
  *
  * @return Slinky.
  */
-sl_t sl_format_quick( sl_p sp, char* fmt, ... );
+sl_t sl_format_quick( sl_p sp, const char* fmt, ... );
 
 
 /**
@@ -583,7 +613,7 @@ sl_t sl_format_quick( sl_p sp, char* fmt, ... );
  *
  * @return Slinky.
  */
-sl_t sl_va_format_quick( sl_p sp, char* fmt, va_list ap );
+sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap );
 
 
 /**
@@ -818,7 +848,7 @@ sl_t sl_tolower( sl_t ss );
  *
  * @return Slinky.
  */
-sl_t sl_read_file( char* filename );
+sl_t sl_read_file( const char* filename );
 
 
 /**
@@ -829,7 +859,7 @@ sl_t sl_read_file( char* filename );
  *
  * @return Slinky.
  */
-sl_t sl_write_file( sl_t ss, char* filename );
+sl_t sl_write_file( sl_t ss, const char* filename );
 
 
 /**
