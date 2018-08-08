@@ -590,6 +590,7 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
      */
 
     char* wp = sl_end( *sp );
+    char* first = wp;
 
     sl_len( *sp ) += size;
     c = fmt;
@@ -648,8 +649,8 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
 
                     case 'p': {
                         int pos;
-                        i64 = va_arg( ap, int );
-                        pos = wp - sl_end( *sp );
+                        i64 = va_arg( coap, int );
+                        pos = wp - first;
                         if ( i64 > pos) {
                             for ( sl_size_t i = pos; i < i64; i++ )
                                 *wp++ = ' ';
