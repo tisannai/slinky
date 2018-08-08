@@ -510,7 +510,7 @@ line5\n\
     s2 = slrdf( "test/test_file.txt" );
     TEST_ASSERT_TRUE( !strcmp( s2, filetext ) );
 
-    slprn( s );
+    sldmp( s );
     sldel( &s );
     sldel( &s2 );
     TEST_ASSERT( s == NULL );

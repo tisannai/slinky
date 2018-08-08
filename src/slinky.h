@@ -161,6 +161,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #define slrdf     sl_read_file
 #define slwrf     sl_write_file
 #define slprn     sl_print
+#define sldmp     sl_dump
 /* clang-format off */
 
 /** @endcond slinky_none */
@@ -863,11 +864,21 @@ sl_t sl_write_file( sl_t ss, const char* filename );
 
 
 /**
- * Display Slinky content.
+ * Print Slinky.
+ *
+ * Clear Slinky content.
  *
  * @param ss Slinky.
  */
 void sl_print( sl_t ss );
+
+
+/**
+ * Display Slinky content.
+ *
+ * @param ss Slinky.
+ */
+void sl_dump( sl_t ss );
 
 
 /**

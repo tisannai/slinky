@@ -550,6 +550,13 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                         break;
                     }
 
+                    case 'p': {
+                        i64 = va_arg( ap, int );
+                        if ( i64 > size )
+                            size = i64;
+                        break;
+                    }
+
                     case '%': {
                         size++;
                         break;
@@ -636,6 +643,17 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                         char ch;
                         ch = (char)va_arg( coap, int );
                         *wp++ = ch;
+                        break;
+                    }
+
+                    case 'p': {
+                        int pos;
+                        i64 = va_arg( ap, int );
+                        pos = wp - sl_end( *sp );
+                        if ( i64 > pos) {
+                            for ( sl_size_t i = pos; i < i64; i++ )
+                                *wp++ = ' ';
+                        }
                         break;
                     }
 
@@ -1075,6 +1093,13 @@ sl_t sl_write_file( sl_t ss, const char* filename )
 
 
 void sl_print( sl_t ss )
+{
+    printf( "%s\n", ss );
+    sl_clear( ss );
+}
+
+
+void sl_dump( sl_t ss )
 {
     printf( "%s\n", ss );
     printf( "  len: %d\n", sl_len( ss ) );
