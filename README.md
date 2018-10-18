@@ -132,6 +132,13 @@ Basic usage example:
 See `slinky.h` for complete list of Slinky library API functions.
 
 
+## Slinky API documentation
+
+See Doxygen documentation. Documentation can be created with:
+
+    shell> doxygen .doxygen
+
+
 # Testing
 
 Tests are in `test` directory. Tests are a reasonable example for Slinky
@@ -139,15 +146,15 @@ use. The boilerplate Ceedling files are not in GIT.
 
 Slinky is tested with Ceedling. Execute
 
-    shell> rake test:all
+    shell> ceedling test:all
 
 to run all tests. Execute
 
-    shell> rake gcov:all
+    shell> ceedling gcov:all
 
 to generate coverage info, and finally, execute
 
-    shell> rake utils:gcov
+    shell> ceedling utils:gcov
 
 to generate coverage reports.
 
