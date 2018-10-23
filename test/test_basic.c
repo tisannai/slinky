@@ -1,3 +1,5 @@
+#include <memtun.h>
+
 #include "unity.h"
 #include "slinky.h"
 #include <string.h>
@@ -10,7 +12,7 @@ void test_basics( void )
     char* t1 = "text1";
     char* sd;
 
-#ifdef SL_MEM_API
+#ifdef SLINKY_MEM_API
     sl_cfg_alloc( sl_malloc_f, sl_free_f, sl_realloc_f );
 #endif
 

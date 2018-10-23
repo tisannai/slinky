@@ -16,6 +16,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <memtun.h>
+
 #include "slinky.h"
 
 
@@ -46,6 +48,8 @@ const char* slinky_version = "0.0.1";
 #define sc_len(s)      strlen(s)
 #define sc_len1(s)     (strlen(s)+1)
 
+#define sc_mp(s)       (((sl_base_p)((s)-(sizeof(sl_s))))->mp)
+
 /** @endcond slinky_none */
 
 /* clang-format on */
@@ -56,20 +60,31 @@ const char* slinky_version = "0.0.1";
  * Utility functions.
  * ------------------------------------------------------------ */
 
-static char* sl_copy_setup( char* dst, char* src );
-static off_t sl_file_size( const char* filename );
+static char*     sl_copy_setup( char* dst, char* src );
+static off_t     sl_file_size( const char* filename );
 static sl_size_t sl_norm_idx( sl_t ss, int idx );
-static sl_t sl_copy_base( sl_p s1, char* s2, sl_size_t len1 );
-static int sl_compare_base( const void* s1, const void* s2 );
-static sl_t sl_concatenate_base( sl_p s1, char* s2, sl_size_t len1 );
-static sl_t sl_insert_base( sl_p s1, int pos, char* s2, sl_size_t len1 );
-static int sl_divide_base( sl_t ss, char c, int size, char** div );
-static int sl_segment_base( sl_t ss, char* sc, int size, char** div );
+static sl_t      sl_copy_base( sl_p s1, char* s2, sl_size_t len1 );
+static int       sl_compare_base( const void* s1, const void* s2 );
+static sl_t      sl_concatenate_base( sl_p s1, char* s2, sl_size_t len1 );
+static sl_t      sl_insert_base( sl_p s1, int pos, char* s2, sl_size_t len1 );
+static int       sl_divide_base( sl_t ss, char c, int size, char** div );
+static int       sl_segment_base( sl_t ss, char* sc, int size, char** div );
 
 static sl_size_t sl_u64_str_len( uint64_t u64 );
-static void sl_u64_to_str( uint64_t u64, char* str );
+static void      sl_u64_to_str( uint64_t u64, char* str );
 static sl_size_t sl_i64_str_len( int64_t i64 );
-static void sl_i64_to_str( int64_t i64, char* str );
+static void      sl_i64_to_str( int64_t i64, char* str );
+
+
+#ifdef SLINKY_USE_MEMTUN
+static mt_t slinky_mt = NULL;
+
+void sl_set_memtun( mt_t mt )
+{
+    slinky_mt = mt;
+}
+#endif
+
 
 
 
@@ -80,8 +95,13 @@ static void sl_i64_to_str( int64_t i64, char* str );
 sl_t sl_new( sl_size_t size )
 {
     sl_base_p s;
+
     size = sl_snor( size );
+#ifdef SLINKY_USE_MEMTUN
+    s = (sl_base_p)mt_alloc( slinky_mt, sl_malsize( size ) );
+#else
     s = (sl_base_p)sl_malloc( sl_malsize( size ) );
+#endif
     s->res = size;
     s->len = 0;
     s->str[ 0 ] = 0;
@@ -105,8 +125,13 @@ sl_t sl_use( void* mem, sl_size_t size )
 
 sl_t sl_del( sl_p sp )
 {
+#ifdef SLINKY_USE_MEMTUN
+    if ( !sl_get_local( *sp ) )
+        mt_free( slinky_mt, sl_base( *sp ) );
+#else
     if ( !sl_get_local( *sp ) )
         sl_free( sl_base( *sp ) );
+#endif
     *sp = 0;
     return NULL;
 }
@@ -125,7 +150,11 @@ sl_t sl_reserve( sl_p sp, sl_size_t size )
             memcpy( sn, *sp, sl_len1( sn ) );
             s = sl_base( sn );
         } else {
+#ifdef SLINKY_USE_MEMTUN
+            s = (sl_base_p)mt_realloc( slinky_mt, s, sl_malsize( size ) );
+#else
             s = (sl_base_p)sl_realloc( s, sl_malsize( size ) );
+#endif
             s->res = size;
         }
         *sp = sl_str( s );
@@ -144,7 +173,11 @@ sl_t sl_compact( sl_p sp )
         sl_base_p s;
         s = sl_base( *sp );
         if ( !sl_get_local( *sp ) ) {
+#ifdef SLINKY_USE_MEMTUN
+            s = (sl_base_p)mt_realloc( slinky_mt, s, sl_malsize( len ) );
+#else
             s = (sl_base_p)sl_realloc( s, sl_malsize( len ) );
+#endif
             s->res = len;
             *sp = sl_str( s );
         }
@@ -187,7 +220,7 @@ sl_t sl_multiple_str_append( sl_p sp, char* cs, sl_size_t cnt )
     sl_reserve( sp, len + cnt * clen + 1 );
     char* p = &( ( *sp )[ len ] );
     for ( sl_size_t i = 0; i < cnt; i++ ) {
-        strncpy( p, cs, clen );
+        memcpy( p, cs, clen );
         p += clen;
     }
     *p = 0;
@@ -208,8 +241,12 @@ sl_t sl_duplicate( sl_t ss )
 char* sl_duplicate_c( sl_t ss )
 {
     ssize_t len1 = sl_len1( ss );
-    char*   dup = sl_malloc( len1 );
-    strncpy( dup, ss, len1 );
+#ifdef SLINKY_USE_MEMTUN
+    char* dup = mt_alloc( slinky_mt, len1 );
+#else
+    char* dup = sl_malloc( len1 );
+#endif
+    memcpy( dup, ss, len1 );
     return dup;
 }
 
@@ -235,7 +272,7 @@ sl_t sl_from_str_c( char* cs )
 {
     sl_size_t len = sc_len1( cs );
     sl_t      ss = sl_new( len );
-    strncpy( ss, cs, len );
+    memcpy( ss, cs, len );
     sl_len( ss ) = len - 1;
     return ss;
 }
@@ -494,9 +531,9 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
      */
 
     const char* c;
-    char*    ts;
-    int64_t  i64;
-    uint64_t u64;
+    char*       ts;
+    int64_t     i64;
+    uint64_t    u64;
 
     c = fmt;
 
@@ -611,7 +648,7 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                             size = strlen( ts );
                         else
                             size = sl_len( ts );
-                        strncpy( wp, ts, size );
+                        memcpy( wp, ts, size );
                         wp += size;
                         break;
                     }
@@ -651,7 +688,7 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                         int pos;
                         i64 = va_arg( coap, int );
                         pos = wp - first;
-                        if ( i64 > pos) {
+                        if ( i64 > pos ) {
                             for ( sl_size_t i = pos; i < i64; i++ )
                                 *wp++ = ' ';
                         }
@@ -757,7 +794,11 @@ int sl_divide_with_char( sl_t ss, char c, int size, char*** div )
     } else {
         /* Calculate size and allocate storage. */
         size = sl_divide_base( ss, c, -1, NULL );
+#ifdef SLINKY_USE_MEMTUN
+        *div = (char**)mt_alloc( slinky_mt, size * sizeof( char* ) );
+#else
         *div = (char**)sl_malloc( size * sizeof( char* ) );
+#endif
         return sl_divide_base( ss, c, size, *div );
     }
 }
@@ -774,7 +815,11 @@ int sl_segment_with_str( sl_t ss, char* sc, int size, char*** div )
     } else {
         /* Calculate size and allocate storage. */
         size = sl_segment_base( ss, sc, -1, NULL );
+#ifdef SLINKY_USE_MEMTUN
+        *div = (char**)mt_alloc( slinky_mt, size * sizeof( char* ) );
+#else
         *div = (char**)sl_malloc( size * sizeof( char* ) );
+#endif
         return sl_segment_base( ss, sc, size, *div );
     }
 }
@@ -1010,7 +1055,7 @@ sl_t sl_map_str( sl_p sp, char* f, char* t )
     while ( *b ) {
         idx = sl_find_index( b, f );
         if ( idx >= 0 ) {
-            strncpy( a, b, idx );
+            memcpy( a, b, idx );
             a += idx;
             a = sl_copy_setup( a, t );
             b += ( idx + f_len );
@@ -1213,7 +1258,7 @@ static sl_size_t sl_norm_idx( sl_t ss, int idx )
 static sl_t sl_copy_base( sl_p s1, char* s2, sl_size_t len1 )
 {
     sl_reserve( s1, len1 );
-    strncpy( *s1, s2, len1 );
+    memcpy( *s1, s2, len1 );
     sl_len( *s1 ) = len1 - 1;
     return *s1;
 }
@@ -1245,7 +1290,7 @@ static int sl_compare_base( const void* s1, const void* s2 )
 static sl_t sl_concatenate_base( sl_p s1, char* s2, sl_size_t len1 )
 {
     sl_reserve( s1, sl_len( *s1 ) + len1 );
-    strncpy( sl_end( *s1 ), s2, len1 );
+    memcpy( sl_end( *s1 ), s2, len1 );
     sl_len( *s1 ) += len1 - 1;
     return *s1;
 }
@@ -1279,7 +1324,7 @@ static sl_t sl_insert_base( sl_p s1, int pos, char* s2, sl_size_t len1 )
     sl_size_t tail = posn + len1;
 
     memmove( ( *s1 ) + tail, ( *s1 ) + posn, ( sl_len( *s1 ) - posn ) );
-    strncpy( ( *s1 ) + posn, s2, len1 );
+    memcpy( ( *s1 ) + posn, s2, len1 );
     sl_len( *s1 ) += len1;
 
     /* Terminate change SL. */

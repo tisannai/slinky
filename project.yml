@@ -32,6 +32,7 @@
   #  2) add entries to the :common: section (e.g. :test: has TEST defined)
   :commmon: &common_defines
     - UNITY_SUPPORT_64
+    - SLINKY_USE_MEMTUN
   :test:
     - *common_defines
     - TEST
@@ -58,7 +59,7 @@
     :compile:
       :*:
         - -Wall
-        - -Wextra
+#        - -Wextra
         - -Wstrict-prototypes
         - -Werror
         - -fdata-sections
@@ -72,7 +73,7 @@
     :compile:
       :*:
         - -Wall
-        - -Wextra
+#        - -Wextra
         - -Wstrict-prototypes
         - -Werror
         - -fdata-sections
@@ -86,7 +87,7 @@
     :executable: gcc
     :arguments:
       - ${1}
-      - -lm
+      - -lm -lmemtun
       - -o ${2}
   :gcov_linker:
     :executable: gcc
@@ -94,15 +95,16 @@
       - -fprofile-arcs
       - -ftest-coverage
       - ${1}
-      - -lm
+      - -lm -lmemtun
       - -o ${2}
   :release_compiler:
     :executable: gcc
     :arguments:
       - ${1}
       - -Wall
-      - -std=c11
-      - -g
+#      - -std=c11
+#      - -g
+      - -O2
       - -fPIC
       - -c
       - -o ${2}
@@ -121,5 +123,8 @@
     - stdout_pretty_tests_report
     - module_generator
     - gcov
+
+:gcov:
+    :html_report_type: detailed
 
 ...

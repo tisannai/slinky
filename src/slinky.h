@@ -16,6 +16,9 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#ifdef SLINKY_USE_MEMTUN
+#include <memtun.h>
+#endif
 
 /** Framer library version. */
 extern const char* slinky_version;
@@ -59,44 +62,44 @@ typedef sl_v      sla;
 
 /* clang-format off */
 
-#ifdef SLINKY_MEM_API
+#ifdef SLINKY_USE_MEM_API
 
 /*
- * SL_MEM_API allows to use custom memory allocation functions,
+ * SLINKY_USE_MEM_API allows to use custom memory allocation functions,
  * instead of the default: sl_malloc, sl_free, sl_realloc.
  *
- * If SL_MEM_API is used, the user must provide implementation for the
- * above functions and they must be compatible with malloc etc.
+ * If SLINKY_USE_MEM_API is used, the user must provide implementation for
+ * the above functions and they must be compatible with malloc etc.
  *
  * Additionally user should compile the library by own means.
  */
 
 extern void* sl_malloc( size_t size );
-extern void sl_free( void* ptr );
+extern void  sl_free( void* ptr );
 extern void* sl_realloc( void* ptr, size_t size );
 
-#else /* SLINKY_MEM_API */
+#else /* SLINKY_USE_MEM_API */
 
 
-#    if SIXTEN_USE_MEM == 1
+#    if SIXTEN_USE_MEM_API == 1
 
-#        define sl_malloc st_alloc
-#        define sl_free st_del
+#        define sl_malloc  st_alloc
+#        define sl_free    st_del
 #        define sl_realloc st_realloc
 
 
-#    else /* SIXTEN_USE_MEM == 1 */
+#    else /* SIXTEN_USE_MEM_API == 1 */
 
 /* Default to regular memory management functions. */
 /** @cond slinky_none */
-#        define sl_malloc malloc
-#        define sl_free free
+#        define sl_malloc  malloc
+#        define sl_free    free
 #        define sl_realloc realloc
 /** @endcond slinky_none */
 
-#    endif /* SIXTEN_USE_MEM == 1 */
+#    endif /* SIXTEN_USE_MEM_API == 1 */
 
-#endif /* SLINKY_MEM_API */
+#endif /* SLINKY_USE_MEM_API */
 
 /* clang-format on */
 
@@ -183,6 +186,19 @@ extern void* sl_realloc( void* ptr, size_t size );
  * @return Slinky.
  */
 sl_t sl_new( sl_size_t size );
+
+
+/**
+ * Create new Slinky using Memtun.
+ *
+ * Only available when SLINKY_USE_MEMTUN is defined.
+ *
+ * @param mt   Memtun.
+ * @param size String storage size.
+ *
+ * @return Slinky.
+ */
+sl_t sl_new_with_mt( mt_t mt, sl_size_t size );
 
 
 /**
