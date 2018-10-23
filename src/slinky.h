@@ -189,19 +189,6 @@ sl_t sl_new( sl_size_t size );
 
 
 /**
- * Create new Slinky using Memtun.
- *
- * Only available when SLINKY_USE_MEMTUN is defined.
- *
- * @param mt   Memtun.
- * @param size String storage size.
- *
- * @return Slinky.
- */
-sl_t sl_new_with_mt( mt_t mt, sl_size_t size );
-
-
-/**
  * Use existing memory allocation for Slinky.
  *
  * "size" is for the whole Slinky, including descriptor and string
