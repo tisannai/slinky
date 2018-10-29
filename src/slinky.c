@@ -60,20 +60,22 @@ const char* slinky_version = "0.0.1";
  * Utility functions.
  * ------------------------------------------------------------ */
 
-static char*     sl_copy_setup( char* dst, char* src );
+static char*     sl_copy_setup( char* dst, const char* src );
 static off_t     sl_file_size( const char* filename );
 static sl_size_t sl_norm_idx( sl_t ss, int idx );
-static sl_t      sl_copy_base( sl_p s1, char* s2, sl_size_t len1 );
+static sl_t      sl_copy_base( sl_p s1, const char* s2, sl_size_t len1 );
 static int       sl_compare_base( const void* s1, const void* s2 );
-static sl_t      sl_concatenate_base( sl_p s1, char* s2, sl_size_t len1 );
-static sl_t      sl_insert_base( sl_p s1, int pos, char* s2, sl_size_t len1 );
+static sl_t      sl_concatenate_base( sl_p s1, const char* s2, sl_size_t len1 );
+static sl_t      sl_insert_base( sl_p s1, int pos, const char* s2, sl_size_t len1 );
 static int       sl_divide_base( sl_t ss, char c, int size, char** div );
-static int       sl_segment_base( sl_t ss, char* sc, int size, char** div );
+static int       sl_segment_base( sl_t ss, const char* sc, int size, char** div );
 
 static sl_size_t sl_u64_str_len( uint64_t u64 );
 static void      sl_u64_to_str( uint64_t u64, char* str );
 static sl_size_t sl_i64_str_len( int64_t i64 );
 static void      sl_i64_to_str( int64_t i64, char* str );
+
+static sl_size_t sl_va_str_len( va_list va );
 
 
 #ifdef SLINKY_USE_MEMTUN
@@ -82,6 +84,11 @@ static mt_t slinky_mt = NULL;
 void sl_set_memtun( mt_t mt )
 {
     slinky_mt = mt;
+}
+
+mt_t sl_get_memtun( void )
+{
+    return slinky_mt;
 }
 #endif
 
@@ -125,15 +132,21 @@ sl_t sl_use( void* mem, sl_size_t size )
 
 sl_t sl_del( sl_p sp )
 {
-#ifdef SLINKY_USE_MEMTUN
-    if ( !sl_get_local( *sp ) )
-        mt_free( slinky_mt, sl_base( *sp ) );
-#else
-    if ( !sl_get_local( *sp ) )
-        sl_free( sl_base( *sp ) );
-#endif
+    sl_del2( *sp );
     *sp = 0;
     return NULL;
+}
+
+
+void sl_del2( sl_t ss )
+{
+#ifdef SLINKY_USE_MEMTUN
+    if ( !sl_get_local( ss ) )
+        mt_free( slinky_mt, sl_base( ss ) );
+#else
+    if ( !sl_get_local( ss ) )
+        sl_free( sl_base( ss ) );
+#endif
 }
 
 
@@ -193,38 +206,112 @@ sl_t sl_copy( sl_p s1, sl_t s2 )
 }
 
 
-sl_t sl_copy_c( sl_p s1, char* s2 )
+sl_t sl_copy_c( sl_p s1, const char* s2 )
 {
     return sl_copy_base( s1, s2, sc_len1( s2 ) );
 }
 
 
-sl_t sl_fill_with_char( sl_p sp, char c, sl_size_t cnt )
+sl_t sl_append_char( sl_p sp, char c )
 {
-    ssize_t len = sl_len( *sp );
-    sl_reserve( sp, len + cnt + 1 );
+    sl_size_t len = sl_len( *sp );
+    sl_reserve( sp, len + 1 );
     char* p = &( ( *sp )[ len ] );
-    for ( sl_size_t i = 0; i < cnt; i++, p++ )
-        *p = c;
+    *p++ = c;
     *p = 0;
-    sl_len( *sp ) += cnt;
+    sl_len( *sp ) += 1;
     return *sp;
 }
 
 
-sl_t sl_multiple_str_append( sl_p sp, char* cs, sl_size_t cnt )
+sl_t sl_append_n_char( sl_p sp, char c, sl_size_t n )
 {
-    ssize_t len = sl_len( *sp );
-    ssize_t clen = sc_len( cs );
-
-    sl_reserve( sp, len + cnt * clen + 1 );
+    sl_size_t len = sl_len( *sp );
+    sl_reserve( sp, len + n + 1 );
     char* p = &( ( *sp )[ len ] );
-    for ( sl_size_t i = 0; i < cnt; i++ ) {
-        memcpy( p, cs, clen );
-        p += clen;
-    }
+    for ( sl_size_t i = 0; i < n; i++, p++ )
+        *p = c;
     *p = 0;
-    sl_len( *sp ) += cnt * clen;
+    sl_len( *sp ) += n;
+    return *sp;
+}
+
+
+sl_t sl_append_substr( sl_p sp, const char* cs, sl_size_t clen )
+{
+    sl_size_t len = sl_len( *sp );
+    sl_reserve( sp, len + clen + 1 );
+    char* p = &( ( *sp )[ len ] );
+    memcpy( p, cs, clen );
+    p += clen;
+    *p = 0;
+    sl_len( *sp ) += clen;
+    return *sp;
+}
+
+
+sl_t sl_append_str( sl_p sp, const char* cs )
+{
+    sl_size_t len = sl_len( *sp );
+    sl_size_t clen = sc_len( cs );
+    sl_reserve( sp, len + clen + 1 );
+    char* p = &( ( *sp )[ len ] );
+    memcpy( p, cs, clen );
+    p += clen;
+    *p = 0;
+    sl_len( *sp ) += clen;
+    return *sp;
+}
+
+
+sl_t sl_append_n_str( sl_p sp, const char* cs, sl_size_t n )
+{
+    sl_size_t len = sl_len( *sp );
+    sl_size_t clen = sc_len( cs );
+
+    sl_reserve( sp, len + n * clen + 1 );
+    char* p = &( ( *sp )[ len ] );
+    for ( sl_size_t i = 0; i < n; i++, p += clen )
+        memcpy( p, cs, clen );
+    *p = 0;
+    sl_len( *sp ) += n * clen;
+    return *sp;
+}
+
+
+sl_t sl_append_va_str( sl_p sp, const char* cs, ... )
+{
+    if ( cs == NULL )
+        return *sp;
+
+    sl_size_t len = sl_len( *sp );
+    sl_size_t clen = sc_len( cs );
+
+    va_list   va;
+    sl_size_t va_len;
+
+    va_start( va, cs );
+    va_len = clen + sl_va_str_len( va );
+    va_end( va );
+
+    sl_reserve( sp, len + va_len + 1 );
+
+    char*       p = &( ( *sp )[ len ] );
+    const char* p2;
+    memcpy( p, cs, clen );
+    p += clen;
+
+    va_start( va, cs );
+    while ( ( cs = va_arg( va, char* ) ) != NULL ) {
+        p2 = cs;
+        while ( *p2 )
+            *p++ = *p2++;
+    }
+    va_end( va );
+
+    *p = 0;
+    sl_len( *sp ) += va_len;
+
     return *sp;
 }
 
@@ -240,7 +327,7 @@ sl_t sl_duplicate( sl_t ss )
 
 char* sl_duplicate_c( sl_t ss )
 {
-    ssize_t len1 = sl_len1( ss );
+    sl_size_t len1 = sl_len1( ss );
 #ifdef SLINKY_USE_MEMTUN
     char* dup = mt_alloc( slinky_mt, len1 );
 #else
@@ -260,6 +347,14 @@ sl_t sl_replicate( sl_t ss )
 }
 
 
+char* sl_drop( sl_t ss )
+{
+    char* ret = (char*)sl_base( ss );
+    memmove( ret, (void*)ss, sl_len1( ss ) );
+    return ret;
+}
+
+
 sl_t sl_clear( sl_t ss )
 {
     sl_len( ss ) = 0;
@@ -268,7 +363,7 @@ sl_t sl_clear( sl_t ss )
 }
 
 
-sl_t sl_from_str_c( char* cs )
+sl_t sl_from_str_c( const char* cs )
 {
     sl_size_t len = sc_len1( cs );
     sl_t      ss = sl_new( len );
@@ -278,7 +373,46 @@ sl_t sl_from_str_c( char* cs )
 }
 
 
-sl_t sl_from_str_with_size_c( char* cs, sl_size_t size )
+sl_t sl_from_va_str_c( const char* cs, ... )
+{
+    if ( cs == NULL )
+        return NULL;
+
+    sl_size_t clen = sc_len( cs );
+
+    va_list   va;
+    sl_size_t va_len;
+
+    va_start( va, cs );
+    va_len = clen + sl_va_str_len( va );
+    va_end( va );
+
+    sl_size_t   len = va_len + 1;
+    sl_t        ss = sl_new( len );
+    char*       p;
+    const char* p2;
+
+    p = (char*)ss;
+
+    memcpy( p, cs, clen );
+    p += clen;
+
+    va_start( va, cs );
+    while ( ( cs = va_arg( va, char* ) ) != NULL ) {
+        p2 = cs;
+        while ( *p2 )
+            *p++ = *p2++;
+    }
+    va_end( va );
+
+    *p = 0;
+    sl_len( ss ) += va_len;
+
+    return ss;
+}
+
+
+sl_t sl_from_str_with_size_c( const char* cs, sl_size_t size )
 {
     sl_size_t len = sc_len1( cs );
     sl_t      ss;
@@ -359,13 +493,13 @@ void sl_sort( sl_v sa, sl_size_t len )
 }
 
 
-sl_t sl_concatenate( sl_p s1, sl_t s2 )
+sl_t sl_concatenate( sl_p s1, const sl_t s2 )
 {
     return sl_concatenate_base( s1, s2, sl_len1( s2 ) );
 }
 
 
-sl_t sl_concatenate_c( sl_p s1, char* s2 )
+sl_t sl_concatenate_c( sl_p s1, const char* s2 )
 {
     return sl_concatenate_base( s1, s2, sc_len1( s2 ) );
 }
@@ -459,7 +593,7 @@ sl_t sl_insert_to( sl_p s1, int pos, sl_t s2 )
 }
 
 
-sl_t sl_insert_to_c( sl_p s1, int pos, char* s2 )
+sl_t sl_insert_to_c( sl_p s1, int pos, const char* s2 )
 {
     return sl_insert_base( s1, pos, s2, sc_len1( s2 ) );
 }
@@ -757,7 +891,7 @@ int sl_find_char_left( sl_t ss, char c, sl_size_t pos )
 }
 
 
-int sl_find_index( sl_t s1, char* s2 )
+int sl_find_index( sl_t s1, const char* s2 )
 {
     if ( s2[ 0 ] == 0 )
         return -1;
@@ -804,7 +938,7 @@ int sl_divide_with_char( sl_t ss, char c, int size, char*** div )
 }
 
 
-int sl_segment_with_str( sl_t ss, char* sc, int size, char*** div )
+int sl_segment_with_str( sl_t ss, const char* sc, int size, char*** div )
 {
     if ( size < 0 ) {
         /* Just count size, don't replace chars. */
@@ -825,7 +959,7 @@ int sl_segment_with_str( sl_t ss, char* sc, int size, char*** div )
 }
 
 
-sl_t sl_glue_array( sl_v sa, sl_size_t size, char* glu )
+sl_t sl_glue_array( sl_v sa, sl_size_t size, const char* glu )
 {
     int       len = 0;
     sl_size_t i;
@@ -857,7 +991,7 @@ sl_t sl_glue_array( sl_v sa, sl_size_t size, char* glu )
 }
 
 
-char* sl_tokenize( sl_t ss, char* delim, char** pos )
+char* sl_tokenize( sl_t ss, const char* delim, char** pos )
 {
     if ( *pos == 0 ) {
         /* First iteration. */
@@ -901,7 +1035,7 @@ char* sl_tokenize( sl_t ss, char* delim, char** pos )
 }
 
 
-sl_t sl_rm_extension( sl_t ss, char* ext )
+sl_t sl_rm_extension( sl_t ss, const char* ext )
 {
     char* pos;
     char* t;
@@ -981,7 +1115,7 @@ sl_t sl_swap_chars( sl_t ss, char f, char t )
 }
 
 
-sl_t sl_map_str( sl_p sp, char* f, char* t )
+sl_t sl_map_str( sl_p sp, const char* f, const char* t )
 {
     /*
      * If "t" is longer than "f", loop and count how many instances of
@@ -1184,7 +1318,7 @@ int sl_get_local( sl_t ss )
  *
  * @return Pointer to dst end.
  */
-static char* sl_copy_setup( char* dst, char* src )
+static char* sl_copy_setup( char* dst, const char* src )
 {
     int i = 0;
     while ( src[ i ] ) {
@@ -1255,7 +1389,7 @@ static sl_size_t sl_norm_idx( sl_t ss, int idx )
  *
  * @return SL.
  */
-static sl_t sl_copy_base( sl_p s1, char* s2, sl_size_t len1 )
+static sl_t sl_copy_base( sl_p s1, const char* s2, sl_size_t len1 )
 {
     sl_reserve( s1, len1 );
     memcpy( *s1, s2, len1 );
@@ -1287,7 +1421,7 @@ static int sl_compare_base( const void* s1, const void* s2 )
  *
  * @return SL.
  */
-static sl_t sl_concatenate_base( sl_p s1, char* s2, sl_size_t len1 )
+static sl_t sl_concatenate_base( sl_p s1, const char* s2, sl_size_t len1 )
 {
     sl_reserve( s1, sl_len( *s1 ) + len1 );
     memcpy( sl_end( *s1 ), s2, len1 );
@@ -1306,7 +1440,7 @@ static sl_t sl_concatenate_base( sl_p s1, char* s2, sl_size_t len1 )
  *
  * @return SL.
  */
-static sl_t sl_insert_base( sl_p s1, int pos, char* s2, sl_size_t len1 )
+static sl_t sl_insert_base( sl_p s1, int pos, const char* s2, sl_size_t len1 )
 {
     sl_size_t len = sl_len( *s1 ) + len1;
     sl_reserve( s1, len );
@@ -1391,7 +1525,7 @@ static int sl_divide_base( sl_t ss, char c, int size, char** div )
  *
  * @return Number of segments.
  */
-static int sl_segment_base( sl_t ss, char* sc, int size, char** div )
+static int sl_segment_base( sl_t ss, const char* sc, int size, char** div )
 {
     int   divcnt = 0;
     int   idx;
@@ -1508,4 +1642,28 @@ static void sl_i64_to_str( int64_t i64, char* str )
     } else {
         sl_u64_to_str( i64, str );
     }
+}
+
+
+/**
+ * Calculate the total length of variable number of strings.
+ *
+ * Argument list must be NULL terminated.
+ *
+ * @param first First string.
+ * @param va    Rest of the strings.
+ *
+ * @return Length of all strings combined.
+ */
+static sl_size_t sl_va_str_len( va_list va )
+{
+    sl_size_t ret;
+    char*     cs;
+
+    ret = 0;
+
+    while ( ( cs = va_arg( va, char* ) ) != NULL )
+        ret += strlen( cs );
+
+    return ret;
 }

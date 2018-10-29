@@ -12,9 +12,11 @@ void test_basics( void )
     char* t1 = "text1";
     char* sd;
 
-#ifdef SLINKY_MEM_API
-    sl_cfg_alloc( sl_malloc_f, sl_free_f, sl_realloc_f );
-#endif
+//#ifdef SLINKY_MEM_API
+//    sl_cfg_alloc( sl_malloc_f, sl_free_f, sl_realloc_f );
+//#endif
+
+    sl_set_memtun( mt_new_std() );
 
     s = slnew( 128 );
 
@@ -46,7 +48,7 @@ void test_basics( void )
     s2 = slrep( s );
     TEST_ASSERT_TRUE( !sldff( s, s2 ) );
     TEST_ASSERT_TRUE( slsme( s, s2 ) );
-    slfil( &s2, 'a', 1 );
+    slach( &s2, 'a' );
     TEST_ASSERT_TRUE( sldff( s, s2 ) );
     TEST_ASSERT_FALSE( slsme( s, s2 ) );
     slpop( s2, 0 );
@@ -57,8 +59,20 @@ void test_basics( void )
     TEST_ASSERT_TRUE( !slcmp( s2, "ext1Ktext1a" ) );
 
     slclr( s2 );
-    slmul( &s2, t1, 3 );
+    slasn( &s2, t1, 3 );
     TEST_ASSERT_TRUE( !slcmp( s2, "text1text1text1" ) );
+    slclr( s2 );
+    slass( &s2, t1, 3 );
+    TEST_ASSERT_TRUE( !slcmp( s2, "tex" ) );
+    slclr( s2 );
+    slast( &s2, t1 );
+    TEST_ASSERT_TRUE( !slcmp( s2, "text1" ) );
+    slclr( s2 );
+    slasv( &s2, t1, t1, NULL );
+    TEST_ASSERT_TRUE( !slcmp( s2, "text1text1" ) );
+    slclr( s2 );
+    slasv( &s2, NULL );
+    TEST_ASSERT_TRUE( !slcmp( s2, "" ) );
     sldel( &s2 );
 
     TEST_ASSERT( slend( s ) == '1' );
@@ -94,6 +108,20 @@ void test_basics( void )
 
     s = sluse( buf, 24 );
     sldel( &s );
+
+    s = slstr_c( t1 );
+    sd = sldrp( s );
+    TEST_ASSERT_TRUE( !strcmp( sd, "text1" ) );
+    sl_free( sd );
+
+    s = slstv_c( t1, t1, t1, NULL );
+    TEST_ASSERT_TRUE( !strcmp( s, "text1text1text1" ) );
+    slde2( s );
+
+    s = slstv_c( NULL );
+    TEST_ASSERT_TRUE( s == NULL );
+
+    sl_free( sl_get_memtun() );
 }
 
 
@@ -193,13 +221,13 @@ void test_content( void )
     TEST_ASSERT( slrss( s ) == 16 );
     TEST_ASSERT( sllen( s ) == 8 );
 
-    slfil( &s, 'a', 10 );
+    slacn( &s, 'a', 10 );
     TEST_ASSERT_TRUE( !strcmp( s, "__text1_aaaaaaaaaa" ) );
     TEST_ASSERT( slrss( s ) == 20 );
     TEST_ASSERT( sllen( s ) == 18 );
 
     slclr( s );
-    slfil( &s, 'a', 10 );
+    slacn( &s, 'a', 10 );
     TEST_ASSERT_TRUE( !strcmp( s, "aaaaaaaaaa" ) );
     TEST_ASSERT( slrss( s ) == 20 );
     TEST_ASSERT( sllen( s ) == 10 );
@@ -213,6 +241,15 @@ void test_content( void )
     TEST_ASSERT_TRUE( !strcmp( s2,
                                "_text1_-123456_654321_123456789_9876543210_X_%_X"
                                "_text1_-123456_654321_123456789_9876543210_X_%_X" ) );
+
+    slclr( s );
+    slfmq( &s, "_%s_%p", t1, 10 );
+    TEST_ASSERT_TRUE( !strcmp( s, "_text1_   " ) );
+
+    slclr( s );
+    slfmq( &s, "_%s_%p", t1, 7 );
+    TEST_ASSERT_TRUE( !strcmp( s, "_text1_" ) );
+
     sldel( &s );
     sldel( &s2 );
 }
@@ -234,6 +271,15 @@ void test_insert( void )
     TEST_ASSERT_TRUE( !strcmp( s, "text1text1text1text1" ) );
     TEST_ASSERT( slrss( s ) == 22 );
     TEST_ASSERT( sllen( s ) == 20 );
+
+    sldel( &s );
+
+    s = slstr_c( t1 );
+    strcpy( s, "foo" );
+    TEST_ASSERT( sllen( s ) == 5 );
+    sl_refresh( s );
+    TEST_ASSERT( sllen( s ) == 3 );
+    slde2( s );
 }
 
 
@@ -513,6 +559,9 @@ line5\n\
     TEST_ASSERT_TRUE( !strcmp( s2, filetext ) );
 
     sldmp( s );
+    sl_print( s );
+    TEST_ASSERT( sllen( s ) == 0 );
+
     sldel( &s );
     sldel( &s2 );
     TEST_ASSERT( s == NULL );
