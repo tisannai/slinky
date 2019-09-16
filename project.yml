@@ -32,7 +32,7 @@
   #  2) add entries to the :common: section (e.g. :test: has TEST defined)
   :commmon: &common_defines
     - UNITY_SUPPORT_64
-    - SLINKY_USE_MEMTUN
+#    - SLINKY_USE_MEMTUN
   :test:
     - *common_defines
     - TEST

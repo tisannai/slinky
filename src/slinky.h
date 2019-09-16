@@ -655,6 +655,30 @@ sl_t sl_insert_to_c( sl_p s1, int pos, const char* s2 );
 
 
 /**
+ * Unquote Slinky.
+ *
+ * Remove all escapes characters.
+ *
+ * @param ss Slinky.
+ *
+ * @return Slinky.
+ */
+sl_t sl_unquote( sl_t ss );
+
+
+/**
+ * Quote Slinky.
+ *
+ * Add escape character (backslash) in front of special characters.
+ *
+ * @param sp Slinky Reference.
+ *
+ * @return Slinky.
+ */
+sl_t sl_quote( sl_p sp );
+
+
+/**
  * Formatted (printf style) print to Slinky.
  *
  * @param sp   Slinky Reference.

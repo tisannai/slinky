@@ -31,11 +31,11 @@ const char* slinky_version = "0.0.1";
 /* clang-format off */
 
 /** @cond slinky_none */
-#define sl_malsize(s)  (sizeof(sl_s) + s)
+#define sl_malsize(s)  (sizeof(sl_s) + (s))
 
 #define sl_smsk        0xFFFFFFFE
 
-#define sl_str(s)      ((char*)&(s->str[0]))
+#define sl_str(s)      ((char*)&((s)->str[0]))
 #define sl_base(s)     ((sl_base_p)((s)-(sizeof(sl_s))))
 #define sl_len(s)      (((sl_base_p)((s)-(sizeof(sl_s))))->len)
 #define sl_len1(s)     ((((sl_base_p)((s)-(sizeof(sl_s))))->len)+1)
@@ -76,6 +76,8 @@ static sl_size_t sl_i64_str_len( int64_t i64 );
 static void      sl_i64_to_str( int64_t i64, char* str );
 
 static sl_size_t sl_va_str_len( va_list va );
+
+static char sl_char_is_special( char c );
 
 
 #ifdef SLINKY_USE_MEMTUN
@@ -215,7 +217,7 @@ sl_t sl_copy_c( sl_p s1, const char* s2 )
 sl_t sl_append_char( sl_p sp, char c )
 {
     sl_size_t len = sl_len( *sp );
-    sl_reserve( sp, len + 1 );
+    sl_reserve( sp, len + 1 + 1 );
     char* p = &( ( *sp )[ len ] );
     *p++ = c;
     *p = 0;
@@ -596,6 +598,134 @@ sl_t sl_insert_to( sl_p s1, int pos, sl_t s2 )
 sl_t sl_insert_to_c( sl_p s1, int pos, const char* s2 )
 {
     return sl_insert_base( s1, pos, s2, sc_len1( s2 ) );
+}
+
+
+sl_t sl_unquote( sl_t ss )
+{
+    sl_size_t ri;
+    sl_size_t wi;
+    sl_size_t cnt;
+    sl_size_t lim;
+
+    ri = 0;
+    wi = 0;
+    cnt = 0;
+    lim = sl_len( ss );
+
+    if ( ss[ 0 ] == '\"' ) {
+        ri++;
+        cnt++;
+    }
+
+    if ( ss[ lim - 1 ] == '\"' ) {
+        lim--;
+        cnt++;
+    }
+
+    for ( ; ri < lim; ri++ ) {
+        if ( ss[ ri ] == '\\' ) {
+            ri++;
+            cnt++;
+
+            /*
+              Allow the single character escapes.
+
+              \a	07	Alert (Beep, Bell) (added in C89)[1]
+              \b	08	Backspace
+              \f	0C	Formfeed
+              \n	0A	Newline (Line Feed); see notes below
+              \r	0D	Carriage Return
+              \t	09	Horizontal Tab
+              \v	0B	Vertical Tab
+              \\	5C	Backslash
+              \'	27	Single quotation mark
+              \"	22	Double quotation mark
+              \?	3F	Question mark (used to avoid trigraphs)
+              \nnnnote 1	any	The byte whose numerical value is given by nnn interpreted as an
+              octal number
+              \xhh…	any	The byte whose numerical value is given by hh… interpreted as a hexadecimal
+              number \enote 2	1B	escape character (some character sets) \Uhhhhhhhhnote 3	none
+              Unicode code point where h is a hexadecimal digit \uhhhhnote 4	none	Unicode code
+              point below 10000 hexadecimal
+            */
+
+            switch ( ss[ ri ] ) {
+                case 'a':
+                    ss[ wi++ ] = '\a';
+                    break;
+                case 'b':
+                    ss[ wi++ ] = '\b';
+                    break;
+                case 'f':
+                    ss[ wi++ ] = '\f';
+                    break;
+                case 'n':
+                    ss[ wi++ ] = '\n';
+                    break;
+                case 'r':
+                    ss[ wi++ ] = '\r';
+                    break;
+                case 'v':
+                    ss[ wi++ ] = '\v';
+                    break;
+                case '\\':
+                    ss[ wi++ ] = '\\';
+                    break;
+                case '\'':
+                    ss[ wi++ ] = '\'';
+                    break;
+                case '"':
+                    ss[ wi++ ] = '\"';
+                    break;
+                case '?':
+                    ss[ wi++ ] = '\?';
+                    break;
+            }
+        } else {
+            ss[ wi++ ] = ss[ ri ];
+        }
+    }
+
+    sl_len( ss ) -= cnt;
+    ss[ sl_len( ss ) ] = 0;
+
+    return ss;
+}
+
+
+sl_t sl_quote( sl_p sp )
+{
+    sl_size_t wi;
+    sl_size_t cnt;
+    char      tc;
+
+    cnt = 0;
+    for ( sl_size_t ri = 0; ri < sl_len( *sp ); ri++ ) {
+        if ( sl_char_is_special( *sp[ ri ] ) )
+            cnt++;
+    }
+
+    /* Add start and end quotes. */
+    cnt += 2;
+
+    sl_reserve( sp, sl_len( *sp ) + cnt + 1 );
+
+    wi = sl_len( *sp ) + 1;
+    *( sp[ wi-- ] ) = 0;
+    *( sp[ wi-- ] ) = '\"';
+    for ( sl_size_t ri = sl_len( *sp ) - cnt; ri >= 0; ri-- ) {
+        if ( ( tc = sl_char_is_special( *sp[ ri ] ) ) ) {
+            *( sp[ wi-- ] ) = tc;
+            *( sp[ wi-- ] ) = '\\';
+        } else {
+            *( sp[ wi-- ] ) = *( sp[ ri ] );
+        }
+    }
+
+    *( sp[ wi-- ] ) = '\"';
+
+    return *sp;
 }
 
 
@@ -1666,4 +1796,32 @@ static sl_size_t sl_va_str_len( va_list va )
         ret += strlen( cs );
 
     return ret;
+}
+
+static char sl_char_is_special( char c )
+{
+    switch ( c ) {
+        case '\a':
+            return 'a';
+        case '\b':
+            return 'b';
+        case '\f':
+            return 'f';
+        case '\n':
+            return 'n';
+        case '\r':
+            return 'r';
+        case '\v':
+            return 'v';
+        case '\\':
+            return '\\';
+        case '\'':
+            return '\'';
+        case '\"':
+            return '\"';
+        case '\?':
+            return '?';
+        default:
+            return 0;
+    }
 }

@@ -1,4 +1,6 @@
-#include <memtun.h>
+#ifdef SLINKY_USE_MEMTUN
+# include <memtun.h>
+#endif
 
 #include "unity.h"
 #include "slinky.h"
@@ -16,7 +18,9 @@ void test_basics( void )
 //    sl_cfg_alloc( sl_malloc_f, sl_free_f, sl_realloc_f );
 //#endif
 
+#ifdef SLINKY_USE_MEMTUN
     sl_set_memtun( mt_new_std() );
+#endif
 
     s = slnew( 128 );
 
@@ -121,7 +125,11 @@ void test_basics( void )
     s = slstv_c( NULL );
     TEST_ASSERT_TRUE( s == NULL );
 
+#ifdef SLINKY_USE_MEMTUN
     sl_free( sl_get_memtun() );
+#else 
+    sl_free( s );
+#endif
 }
 
 
@@ -257,22 +265,27 @@ void test_content( void )
 
 void test_insert( void )
 {
-    sl_t   s;
+    sl_t   s, s2;
     char* t1 = "text1";
 
     s = slstr_c( t1 );
+    s2 = slstr_c( t1 );
 
     slins_c( &s, 0, t1 );
+    slins_c( &s2, 0, t1 );
     TEST_ASSERT_TRUE( !strcmp( s, "text1text1" ) );
     TEST_ASSERT( slrss( s ) == 12 );
     TEST_ASSERT( sllen( s ) == 10 );
 
-    slins( &s, 128, s );
+    //slins( &s, 128, s );
+    slins( &s, 5, s2 );
+    //slins( &s, 5, s );
     TEST_ASSERT_TRUE( !strcmp( s, "text1text1text1text1" ) );
     TEST_ASSERT( slrss( s ) == 22 );
     TEST_ASSERT( sllen( s ) == 20 );
 
     sldel( &s );
+    sldel( &s2 );
 
     s = slstr_c( t1 );
     strcpy( s, "foo" );
