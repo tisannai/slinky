@@ -4,3 +4,4 @@ test/support/*
 doc
 .gdbinit
 .tiide.el
+test/test_file.txt
