@@ -714,7 +714,7 @@ sl_t sl_quote( sl_p sp )
     wi = sl_len( *sp ) + 1;
     *( sp[ wi-- ] ) = 0;
     *( sp[ wi-- ] ) = '\"';
-    for ( sl_size_t ri = sl_len( *sp ) - cnt; ri >= 0; ri-- ) {
+    for ( int32_t ri = sl_len( *sp ) - cnt; ri >= 0; ri-- ) {
         if ( ( tc = sl_char_is_special( *sp[ ri ] ) ) ) {
             *( sp[ wi-- ] ) = tc;
             *( sp[ wi-- ] ) = '\\';
