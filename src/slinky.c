@@ -939,17 +939,18 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
 #else
 
     sl_size_t   size;
+    sl_size_t   extension;
     const char* c;
     char*       ts;
     int64_t     i64;
     uint64_t    u64;
     sr_s        sr;
 
-    size = sl_va_format_quick_size( fmt, ap );
+    extension = sl_va_format_quick_size( fmt, ap );
 
 #endif
 
-    sl_reserve( sp, sl_len1( *sp ) + size );
+    sl_reserve( sp, sl_len1( *sp ) + extension );
 
 
     /* ------------------------------------------------------------
@@ -959,7 +960,6 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
     char* wp = sl_end( *sp );
     char* first = wp;
 
-    sl_len( *sp ) += size;
     c = fmt;
 
     while ( *c ) {
@@ -970,6 +970,12 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                 c++;
 
                 switch ( *c ) {
+
+                    case '!': {
+                        wp = sl_end( *sp );
+                        break;
+                    }
+
 
                     case 's':
                     case 'S': {
@@ -1028,8 +1034,6 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                     }
 
                     case 'r': {
-                        // ts = va_arg( coap, char* );
-                        // size = va_arg( coap, int );
                         sr = va_arg( coap, sr_s );
                         memcpy( wp, sr.str, sr.len );
                         wp += sr.len;
@@ -1104,6 +1108,8 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
         }
     }
     va_end( coap );
+
+    sl_len( *sp ) += ( wp - first );
 
     *wp = 0;
 
@@ -2219,6 +2225,10 @@ static sl_size_t sl_va_format_quick_size( const char* fmt, va_list ap )
 
                 switch ( *c ) {
 
+                    case '!': {
+                        break;
+                    }
+
                     case 's': {
                         ts = va_arg( ap, char* );
                         size += strlen( ts );
@@ -2268,8 +2278,6 @@ static sl_size_t sl_va_format_quick_size( const char* fmt, va_list ap )
                     }
 
                     case 'r': {
-                        // ts = va_arg( ap, char* );
-                        // i64 = va_arg( ap, int );
                         sr = va_arg( ap, sr_s );
                         size += sr.len;
                         break;

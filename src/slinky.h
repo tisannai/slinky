@@ -785,6 +785,7 @@ sl_t sl_va_format( sl_p sp, const char* fmt, va_list ap );
  * Quick Format is close to printf format, but is significantly
  * reduced and faster.
  *
+ *     %! = Reset.
  *     %s = C string.
  *     %S = Slinky string.
  *     %i = Integer.
