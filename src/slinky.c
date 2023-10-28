@@ -71,13 +71,14 @@ static int       sl_divide_base( sl_t ss, char c, int size, char** div );
 static int       sl_segment_base( sl_t ss, const char* sc, int size, char** div );
 
 static sl_size_t sl_u64_str_len( uint64_t u64 );
-static void      sl_u64_to_str( uint64_t u64, char* str );
+static char*     sl_u64_to_str( uint64_t u64, char* str );
 static sl_size_t sl_i64_str_len( int64_t i64 );
-static void      sl_i64_to_str( int64_t i64, char* str );
+static char*     sl_i64_to_str( int64_t i64, char* str );
 
 static sl_size_t sl_va_str_len( va_list va );
 
-static char sl_char_is_special( char c );
+static char      sl_char_is_special( char c );
+static sl_size_t sl_va_format_quick_size( const char* fmt, va_list ap );
 
 
 #ifdef SLINKY_USE_MEMTUN
@@ -110,6 +111,7 @@ sl_t sl_new( sl_size_t size )
     s = (sl_base_p)mt_alloc( slinky_mt, sl_malsize( size ) );
 #else
     s = (sl_base_p)sl_malloc( sl_malsize( size ) );
+    // memset( s, 0, sl_malsize( size ) );
 #endif
     s->res = size;
     s->len = 0;
@@ -281,6 +283,12 @@ sl_t sl_append_n_str( sl_p sp, const char* cs, sl_size_t n )
 }
 
 
+sl_t sl_append_sr( sl_p sp, sr_s sr )
+{
+    return sl_append_substr( sp, sr.str, sr.len );
+}
+
+
 sl_t sl_append_va_str( sl_p sp, const char* cs, ... )
 {
     if ( cs == NULL )
@@ -343,7 +351,7 @@ char* sl_duplicate_c( sl_t ss )
 sl_t sl_replicate( sl_t ss )
 {
     sl_t sn;
-    sn = sl_new( sl_len( ss ) + 1 );
+    sn = sl_new( sl_len1( ss ) );
     sl_copy( &sn, ss );
     return sn;
 }
@@ -368,6 +376,16 @@ sl_t sl_clear( sl_t ss )
 sl_t sl_from_str_c( const char* cs )
 {
     sl_size_t len = sc_len1( cs );
+    sl_t      ss = sl_new( len );
+    memcpy( ss, cs, len );
+    sl_len( ss ) = len - 1;
+    return ss;
+}
+
+
+sl_t sl_from_len_c( const char* cs, sl_size_t clen )
+{
+    sl_size_t len = clen + 1;
     sl_t      ss = sl_new( len );
     memcpy( ss, cs, len );
     sl_len( ss ) = len - 1;
@@ -442,9 +460,29 @@ sl_size_t sl_length( sl_t ss )
 }
 
 
+sl_t sl_set_length( sl_t ss, sl_size_t len )
+{
+    ss[ len ] = 0;
+    sl_len( ss ) = len;
+    return ss;
+}
+
+
 sl_size_t sl_reservation_size( sl_t ss )
 {
     return sl_res( ss );
+}
+
+
+sl_size_t sl_body_size( void )
+{
+    return sizeof( sl_s );
+}
+
+
+sl_size_t sl_normalize_size( sl_size_t size )
+{
+    return sl_snor( size );
 }
 
 
@@ -780,12 +818,18 @@ sl_t sl_format_quick( sl_p sp, const char* fmt, ... )
 }
 
 
+
+
 sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
 {
+
     va_list coap;
 
-    /* Copy ap to coap for second va-call. */
     va_copy( coap, ap );
+
+#if 0
+
+    /* Copy ap to coap for second va-call. */
 
     int size = 0;
 
@@ -798,6 +842,7 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
     char*       ts;
     int64_t     i64;
     uint64_t    u64;
+    sr_s        sr;
 
     c = fmt;
 
@@ -858,6 +903,14 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                         break;
                     }
 
+                    case 'r': {
+                        // ts = va_arg( ap, char* );
+                        // i64 = va_arg( ap, int );
+                        sr = va_arg( ap, sr_s );
+                        size += sr.len;
+                        break;
+                    }
+
                     case '%': {
                         size++;
                         break;
@@ -882,6 +935,19 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
     }
 
     va_end( ap );
+
+#else
+
+    sl_size_t   size;
+    const char* c;
+    char*       ts;
+    int64_t     i64;
+    uint64_t    u64;
+    sr_s        sr;
+
+    size = sl_va_format_quick_size( fmt, ap );
+
+#endif
 
     sl_reserve( sp, sl_len1( *sp ) + size );
 
@@ -923,9 +989,10 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                             i64 = va_arg( coap, int );
                         else
                             i64 = va_arg( coap, int64_t );
-                        size = sl_i64_str_len( i64 );
-                        sl_i64_to_str( i64, wp );
-                        wp += size;
+                        //                         size = sl_i64_str_len( i64 );
+                        //                         sl_i64_to_str( i64, wp );
+                        //                         wp += size;
+                        wp = sl_i64_to_str( i64, wp );
                         break;
                     }
 
@@ -935,9 +1002,10 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                             u64 = va_arg( coap, unsigned int );
                         else
                             u64 = va_arg( coap, uint64_t );
-                        size = sl_u64_str_len( u64 );
-                        sl_u64_to_str( u64, wp );
-                        wp += size;
+                        //                         size = sl_u64_str_len( u64 );
+                        //                         sl_u64_to_str( u64, wp );
+                        //                         wp += size;
+                        wp = sl_u64_to_str( u64, wp );
                         break;
                     }
 
@@ -958,6 +1026,61 @@ sl_t sl_va_format_quick( sl_p sp, const char* fmt, va_list ap )
                         }
                         break;
                     }
+
+                    case 'r': {
+                        // ts = va_arg( coap, char* );
+                        // size = va_arg( coap, int );
+                        sr = va_arg( coap, sr_s );
+                        memcpy( wp, sr.str, sr.len );
+                        wp += sr.len;
+                        break;
+                    }
+
+#if 0
+                    case 'a': {
+                        bool left_pad;
+                        char pad;
+                        sl_size_t width;
+                        sl_size_t nominal_size;
+
+                        // %al012i
+
+                        c++;
+                        if ( *c == 'l' ) {
+                            left_pad = true;
+                        } else {
+                            left_pad = false;
+                        }
+                        c++;
+                        pad = *c;
+                        c++;
+                        width = sl_str_to_number( &c );
+                        nominal_size = sl_va_format_quick_item_size( *c, ap );
+                        if ( width > nominal_size ) {
+                            if ( left_pad ) {
+                                for ( int i = 0; i < ( width - nominal_size ); i++ ) {
+                                    *wp = pad;
+                                    wp++;
+                                }
+
+                            size += width;
+                        } else {
+                            size += nominal_size;
+                        }
+
+
+
+
+                        ts = va_arg( coap, char* );
+                        if ( *c == 's' )
+                            size = strlen( ts );
+                        else
+                            size = sl_len( ts );
+                        memcpy( wp, ts, size );
+                        wp += size;
+                        break;
+                    }
+#endif
 
                     case '%': {
                         *wp++ = '%';
@@ -1337,6 +1460,31 @@ sl_t sl_map_str( sl_p sp, const char* f, const char* t )
 }
 
 
+sl_t sl_map_part( sl_p sp, sl_size_t from_a, sl_size_t from_b, const char* to, sl_size_t to_len )
+{
+    int   size_diff;
+    char* start;
+    char* orgtail;
+    char* newtail;
+
+    size_diff = to_len - ( from_b - from_a );
+    if ( size_diff > 0 ) {
+        sl_reserve( sp, sl_len1( *sp ) + size_diff );
+    }
+
+    start = *sp;
+    orgtail = &start[ from_b ];
+    newtail = &start[ from_a + to_len ];
+
+    memmove( newtail, orgtail, sl_len1( *sp ) - from_b );
+    memcpy( &start[ from_a ], to, to_len );
+
+    sl_len( *sp ) = sl_len( *sp ) + size_diff;
+
+    return *sp;
+}
+
+
 sl_t sl_capitalize( sl_t ss )
 {
     if ( sl_len( ss ) > 0 )
@@ -1388,6 +1536,30 @@ sl_t sl_read_file( const char* filename )
 }
 
 
+sl_t sl_read_file_with_pad( const char* filename, sl_size_t left, sl_size_t right )
+{
+    sl_t ss;
+
+    off_t size = sl_file_size( filename );
+    if ( size < 0 )
+        return NULL; // GCOV_EXCL_LINE
+
+    ss = sl_new( size + left + right + 1 );
+
+    int fd;
+
+    fd = open( filename, O_RDONLY );
+    if ( fd == -1 )
+        return NULL; // GCOV_EXCL_LINE
+    read( fd, &ss[ left ], size );
+    ss[ size + left ] = 0;
+    sl_len( ss ) = size + left;
+    close( fd );
+
+    return ss;
+}
+
+
 sl_t sl_write_file( sl_t ss, const char* filename )
 {
     int fd;
@@ -1402,10 +1574,37 @@ sl_t sl_write_file( sl_t ss, const char* filename )
 }
 
 
-void sl_print( sl_t ss )
+void sl_print( const char* fmt, ... )
 {
-    printf( "%s\n", ss );
-    sl_clear( ss );
+    char mem[ 2048 ];
+    sl_t sl;
+
+    sl = sl_use( mem, 2048 );
+
+    va_list ap;
+
+    va_start( ap, fmt );
+    sl_va_format_quick( &sl, fmt, ap );
+    va_end( ap );
+
+    printf( "%s", sl );
+}
+
+
+void sl_write( const int fd, const char* fmt, ... )
+{
+    char mem[ 2048 ];
+    sl_t sl;
+
+    sl = sl_use( mem, 2048 );
+
+    va_list ap;
+
+    va_start( ap, fmt );
+    sl_va_format_quick( &sl, fmt, ap );
+    va_end( ap );
+
+    write( fd, sl, sl_length( sl ) );
 }
 
 
@@ -1430,6 +1629,58 @@ void sl_set_local( sl_t ss, int val )
 int sl_get_local( sl_t ss )
 {
     return sl_local( ss );
+}
+
+
+sr_s sr_new( const char* str, sl_size_t len )
+{
+    sr_s ret;
+    ret.str = str;
+    ret.len = len;
+    return ret;
+}
+
+
+sr_s sr_new_c( const char* str )
+{
+    sr_s ret;
+    ret.str = str;
+    ret.len = strlen( str );
+    return ret;
+}
+
+const char* sr_text( sr_s sr )
+{
+    return sr.str;
+}
+
+sl_size_t sr_length( sr_s sr )
+{
+    return sr.len;
+}
+
+int sr_compare( sr_s s1, sr_s s2 )
+{
+    if ( s1.len != s2.len ) {
+        return 1;
+    } else {
+        return memcmp( s1.str, s2.str, s1.len );
+    }
+}
+
+int sr_compare_full( sr_s s1, sr_s s2 )
+{
+    if ( s1.len != s2.len ) {
+        size_t len;
+        if ( s1.len < s2.len ) {
+            len = s1.len;
+        } else {
+            len = s2.len;
+        }
+        return strncmp( s1.str, s2.str, len );
+    } else {
+        return strncmp( s1.str, s2.str, s1.len );
+    }
 }
 
 
@@ -1715,10 +1966,13 @@ static sl_size_t sl_u64_str_len( uint64_t u64 )
  *
  * @param u64 Integer to convert.
  * @param str Storage for conversion.
+ *
+ * @return Storage position after conversion.
  */
-static void sl_u64_to_str( uint64_t u64, char* str )
+static char* sl_u64_to_str( uint64_t u64, char* str )
 {
     char* c;
+    char* ret;
 
     c = str;
     do {
@@ -1727,6 +1981,7 @@ static void sl_u64_to_str( uint64_t u64, char* str )
     } while ( u64 != 0 );
 
     *c = 0;
+    ret = c;
     c--;
 
     /* Reverse the string. */
@@ -1738,6 +1993,8 @@ static void sl_u64_to_str( uint64_t u64, char* str )
         str++;
         c--;
     }
+
+    return ret;
 }
 
 
@@ -1763,14 +2020,16 @@ static sl_size_t sl_i64_str_len( int64_t i64 )
  *
  * @param i64 Integer to convert.
  * @param str Storage for conversion.
+ *
+ * @return Storage position after conversion.
  */
-static void sl_i64_to_str( int64_t i64, char* str )
+static char* sl_i64_to_str( int64_t i64, char* str )
 {
     if ( i64 < 0 ) {
         *str++ = '-';
-        sl_u64_to_str( -i64, str );
+        return sl_u64_to_str( -i64, str );
     } else {
-        sl_u64_to_str( i64, str );
+        return sl_u64_to_str( i64, str );
     }
 }
 
@@ -1824,4 +2083,239 @@ static char sl_char_is_special( char c )
         default:
             return 0;
     }
+}
+
+
+static int sl_str_to_number( const char** str_p )
+{
+    int         i;
+    int         ret;
+    const char* str;
+
+    str = *str_p;
+    i = 0;
+    ret = 0;
+    while ( str[ i ] >= '0' && str[ i ] <= '9' ) {
+        ret = 10 * ret + ( str[ i ] - '0' );
+        i++;
+    }
+
+    *str_p += i;
+
+    return ret;
+}
+
+
+#if 0
+static sl_size_t sl_quick_size( const char ch, void* item )
+{
+    switch ( ch ) {
+        case 's': return strlen( *((char**)item) );
+        case 'S': return sl_len( *((char**)item) );
+        case 'i': return sl_i64_str_len( *((int*)item) );
+        case 'I': return sl_i64_str_len( *((int64_t*)item) );
+        case 'u': return sl_u64_str_len( *((unsigned int*)item) );
+        case 'U': return sl_u64_str_len( *((uint64_t*)item) );
+        case 'c': return 1;
+        case 'r': return ((sr_s*)item)->len;
+        case '%': return 1;
+        default: return 1;
+    }
+}
+#endif
+
+
+static sl_size_t sl_va_format_quick_item_size( const char ch, va_list ap )
+{
+    /* ------------------------------------------------------------
+     * Calculate string size.
+     */
+
+    char*    ts;
+    int64_t  i64;
+    uint64_t u64;
+    sr_s     sr;
+
+    switch ( ch ) {
+
+        case 's': {
+            ts = va_arg( ap, char* );
+            return strlen( ts );
+        }
+
+        case 'S': {
+            ts = va_arg( ap, char* );
+            return sl_len( ts );
+        }
+
+        case 'i': {
+            i64 = va_arg( ap, int );
+            return sl_i64_str_len( i64 );
+        }
+
+        case 'I': {
+            i64 = va_arg( ap, int64_t );
+            return sl_i64_str_len( i64 );
+        }
+
+        case 'u': {
+            u64 = va_arg( ap, unsigned int );
+            return sl_u64_str_len( u64 );
+        }
+
+        case 'U': {
+            u64 = va_arg( ap, uint64_t );
+            return sl_u64_str_len( u64 );
+        }
+
+        case 'c': {
+            return 1;
+        }
+
+        case 'r': {
+            sr = va_arg( ap, sr_s );
+            return sr.len;
+        }
+
+        case '%': {
+            return 1;
+        }
+
+        default: {
+            return 1;
+        }
+    }
+}
+
+
+static sl_size_t sl_va_format_quick_size( const char* fmt, va_list ap )
+{
+    //     va_list coap;
+    //
+    //     /* Copy ap to coap for second va-call. */
+    //     va_copy( coap, ap );
+
+    sl_size_t size = 0;
+
+
+    /* ------------------------------------------------------------
+     * Calculate string size.
+     */
+
+    const char* c;
+    char*       ts;
+    int64_t     i64;
+    uint64_t    u64;
+    sr_s        sr;
+
+    c = fmt;
+
+    while ( *c ) {
+
+        switch ( *c ) {
+
+            case '%': {
+                c++;
+
+                switch ( *c ) {
+
+                    case 's': {
+                        ts = va_arg( ap, char* );
+                        size += strlen( ts );
+                        break;
+                    }
+
+                    case 'S': {
+                        ts = va_arg( ap, char* );
+                        size += sl_len( ts );
+                        break;
+                    }
+
+                    case 'i': {
+                        i64 = va_arg( ap, int );
+                        size += sl_i64_str_len( i64 );
+                        break;
+                    }
+
+                    case 'I': {
+                        i64 = va_arg( ap, int64_t );
+                        size += sl_i64_str_len( i64 );
+                        break;
+                    }
+
+                    case 'u': {
+                        u64 = va_arg( ap, unsigned int );
+                        size += sl_u64_str_len( u64 );
+                        break;
+                    }
+
+                    case 'U': {
+                        u64 = va_arg( ap, uint64_t );
+                        size += sl_u64_str_len( u64 );
+                        break;
+                    }
+
+                    case 'c': {
+                        size++;
+                        break;
+                    }
+
+                    case 'p': {
+                        i64 = va_arg( ap, int );
+                        if ( i64 > size )
+                            size = i64;
+                        break;
+                    }
+
+                    case 'r': {
+                        // ts = va_arg( ap, char* );
+                        // i64 = va_arg( ap, int );
+                        sr = va_arg( ap, sr_s );
+                        size += sr.len;
+                        break;
+                    }
+
+                    case 'a': {
+                        sl_size_t width;
+                        sl_size_t nominal_size;
+
+                        // %al012i
+
+                        c += 3;
+                        width = sl_str_to_number( &c );
+                        nominal_size = sl_va_format_quick_item_size( *c, ap );
+                        if ( width > nominal_size ) {
+                            size += width;
+                        } else {
+                            size += nominal_size;
+                        }
+                        break;
+                    }
+
+                    case '%': {
+                        size++;
+                        break;
+                    }
+
+                    default: {
+                        size++;
+                        break;
+                    }
+                }
+
+                c++;
+                break;
+            }
+
+            default: {
+                size++;
+                c++;
+                break;
+            }
+        }
+    }
+
+    va_end( ap );
+
+    return size;
 }

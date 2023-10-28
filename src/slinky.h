@@ -41,6 +41,14 @@ typedef struct
     char      str[ 0 ]; /**< String content. */
 } sl_s;
 
+/** Slinky reference. */
+typedef struct
+{
+    const char* str; /**< String reference. */
+    sl_size_t   len; /**< Length (used). */
+} sr_s;
+typedef sr_s* sr_t;
+
 
 /** Pointer to Slinky. */
 typedef sl_s* sl_base_p;
@@ -61,6 +69,16 @@ typedef sl_p      slp;
 typedef sl_v      sla;
 /** @} */
 
+
+#define SR_NULL \
+    {           \
+        NULL, 0 \
+    }
+#define SR_INIT \
+    ( sr_s )    \
+    {           \
+        NULL, 0 \
+    }
 
 /* clang-format off */
 
@@ -123,6 +141,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #define slass     sl_append_substr
 #define slast     sl_append_str
 #define slasn     sl_append_n_str
+#define slasr     sl_append_sr
 #define slasv     sl_append_va_str
 #define sldup     sl_duplicate
 #define sldup_c   sl_duplicate_c
@@ -173,6 +192,7 @@ extern void* sl_realloc( void* ptr, size_t size );
 #define slrdf     sl_read_file
 #define slwrf     sl_write_file
 #define slprn     sl_print
+#define slwrt     sl_write
 #define sldmp     sl_dump
 /* clang-format off */
 
@@ -215,7 +235,7 @@ sl_t sl_use( void* mem, sl_size_t size );
 /**
  * Delete Slinky using reference.
  *
- * @param sp Slinky Reference.
+ * @param sp Pointer to Slinky.
  *
  * @return NULL
  */
@@ -237,7 +257,7 @@ void sl_del2( sl_t ss );
  *
  * If current storage is bigger, do nothing.
  *
- * @param sp   Slinky Reference.
+ * @param sp   Pointer to Slinky.
  * @param size Storage size.
  *
  * @return Slinky.
@@ -250,7 +270,7 @@ sl_t sl_reserve( sl_p sp, sl_size_t size );
  *
  * Minimum is string length + 1.
  *
- * @param sp Slinky Reference.
+ * @param sp Pointer to Slinky.
  *
  * @return Slinky.
  */
@@ -260,7 +280,7 @@ sl_t sl_compact( sl_p sp );
 /**
  * Copy Slinky content from another Slinky.
  *
- * @param s1 Slinky Reference.
+ * @param s1 Pointer to Slinky.
  * @param s2 Slinky.
  *
  * @return Slinky.
@@ -271,7 +291,7 @@ sl_t sl_copy( sl_p s1, sl_t s2 );
 /**
  * Copy Slinky content from CSTR.
  *
- * @param s1 Slinky Reference.
+ * @param s1 Pointer to Slinky.
  * @param s2 Slinky.
  *
  * @return Slinky.
@@ -282,7 +302,7 @@ sl_t sl_copy_c( sl_p s1, const char* s2 );
 /**
  * Append Slinky with character.
  *
- * @param sp  Slinky Reference.
+ * @param sp  Pointer to Slinky.
  * @param c   Char to append.
  *
  * @return Slinky.
@@ -293,7 +313,7 @@ sl_t sl_append_char( sl_p sp, char c );
 /**
  * Append Slinky with character n times.
  *
- * @param sp  Slinky Reference.
+ * @param sp  Pointer to Slinky.
  * @param c   Char to append.
  * @param n   Append count.
  *
@@ -305,7 +325,7 @@ sl_t sl_append_n_char( sl_p sp, char c, sl_size_t n );
 /**
  * Append characters from string taking "cnt" chars.
  *
- * @param sp   Slinky Reference.
+ * @param sp   Pointer to Slinky.
  * @param cs   CSTR for appending.
  * @param clen Sub-string length.
  *
@@ -317,7 +337,7 @@ sl_t sl_append_substr( sl_p sp, const char* cs, sl_size_t clen );
 /**
  * Append string to Slinky.
  *
- * @param sp Slinky Reference.
+ * @param sp Pointer to Slinky.
  * @param cs CSTR.
  *
  * @return Slinky.
@@ -328,7 +348,7 @@ sl_t sl_append_str( sl_p sp, const char* cs );
 /**
  * Append string to Slinky n times.
  *
- * @param sp Slinky Reference.
+ * @param sp Pointer to Slinky.
  * @param cs CSTR.
  * @param n  Append count.
  *
@@ -338,12 +358,24 @@ sl_t sl_append_n_str( sl_p sp, const char* cs, sl_size_t n );
 
 
 /**
+ * Append Pointer to Slinky to Slinky.
+ *
+ * @param sp Pointer to Slinky.
+ * @param cs CSTR.
+ * @param n  Append count.
+ *
+ * @return Slinky.
+ */
+sl_t sl_append_sr( sl_p sp, sr_s sr );
+
+
+/**
  * Append many strings to Slinky.
  *
  * Variable amount of strings are appended. The argument list must be
  * terminated with NULL.
  *
- * @param sp Slinky Reference.
+ * @param sp Pointer to Slinky.
  * @param cs First CSTR.
  *
  * @return Slinky.
@@ -419,6 +451,17 @@ sl_t sl_from_str_c( const char* cs );
 
 
 /**
+ * Create Slinky based on CSTR with given len.
+ *
+ * @param cs  CSTR.
+ * @param len CSTR length.
+ *
+ * @return Slinky.
+ */
+sl_t sl_from_len_c( const char* cs, sl_size_t clen );
+
+
+/**
  * Create Slinky based on variable number of CSTR.
  *
  * @param cs First CSTR.
@@ -465,6 +508,17 @@ sl_size_t sl_length( sl_t ss );
 
 
 /**
+ * Set Slinky length.
+ *
+ * @param ss  Slinky.
+ * @param len New length.
+ *
+ * @return Slinky.
+ */
+sl_t sl_set_length( sl_t ss, sl_size_t len );
+
+
+/**
  * Return Slinky storage size.
  *
  * Storage size is the string content storage.
@@ -474,6 +528,30 @@ sl_size_t sl_length( sl_t ss );
  * @return Storage size.
  */
 sl_size_t sl_reservation_size( sl_t ss );
+
+
+/**
+ * Return Slinky body size.
+ *
+ * Body size is the size of the Slinky non-string content storage,
+ * i.e. the bookkeeping part.
+ *
+ * @return Body size.
+ */
+sl_size_t sl_body_size( void );
+
+
+/**
+ * Return normalized Slinky size.
+ *
+ * Body size is the size of the Slinky non-string content storage,
+ * i.e. the bookkeeping part.
+ *
+ * @param size Suggested size.
+ *
+ * @return Normalized size.
+ */
+sl_size_t sl_normalize_size( sl_size_t size );
 
 
 /**
@@ -541,7 +619,7 @@ void sl_sort( sl_v sa, sl_size_t len );
 /**
  * Concatenate Slinky to Slinky.
  *
- * @param s1 Slinky Reference.
+ * @param s1 Pointer to Slinky.
  * @param s2 Slinky to add.
  *
  * @return Slinky.
@@ -552,7 +630,7 @@ sl_t sl_concatenate( sl_p s1, sl_t s2 );
 /**
  * Concatenate CSTR to Slinky.
  *
- * @param s1 Slinky Reference.
+ * @param s1 Pointer to Slinky.
  * @param s2 CSTR to add.
  *
  * @return Slinky.
@@ -565,7 +643,7 @@ sl_t sl_concatenate_c( sl_p s1, const char* s2 );
  *
  * Pos can be positive or negative.
  *
- * @param sp  Slinky Reference.
+ * @param sp  Pointer to Slinky.
  * @param pos Pos.
  * @param c   Char to push.
  *
@@ -633,7 +711,7 @@ sl_t sl_select_slice( sl_t ss, int a, int b );
 /**
  * Insert Slinky into another Slinky.
  *
- * @param s1  Target Slinky Reference.
+ * @param s1  Target Pointer to Slinky.
  * @param pos Insertion position.
  * @param s2  Inserted Slinky.
  *
@@ -645,7 +723,7 @@ sl_t sl_insert_to( sl_p s1, int pos, sl_t s2 );
 /**
  * Insert CSTR into Slinky.
  *
- * @param s1  Target Slinky Reference.
+ * @param s1  Target Pointer to Slinky.
  * @param pos Insertion position.
  * @param s2  Inserted CSTR.
  *
@@ -671,7 +749,7 @@ sl_t sl_unquote( sl_t ss );
  *
  * Add escape character (backslash) in front of special characters.
  *
- * @param sp Slinky Reference.
+ * @param sp Pointer to Slinky.
  *
  * @return Slinky.
  */
@@ -681,7 +759,7 @@ sl_t sl_quote( sl_p sp );
 /**
  * Formatted (printf style) print to Slinky.
  *
- * @param sp   Slinky Reference.
+ * @param sp   Pointer to Slinky.
  * @param fmt  Format.
  *
  * @return Slinky.
@@ -692,7 +770,7 @@ sl_t sl_format( sl_p sp, const char* fmt, ... );
 /**
  * Variable Arguments (VA) version of sl_format().
  *
- * @param sp  Slinky Reference.
+ * @param sp  Pointer to Slinky.
  * @param fmt Format.
  * @param ap  VA list.
  *
@@ -715,9 +793,10 @@ sl_t sl_va_format( sl_p sp, const char* fmt, va_list ap );
  *     %U = Unsigned 64-bit integer.
  *     %c = Character.
  *     %p = Pad upto column.
+ *     %r = Slinky Reference.
  *     %% = Literal '%'.
  *
- * @param sp   Slinky Reference.
+ * @param sp   Pointer to Slinky.
  * @param fmt  Quick Format.
  *
  * @return Slinky.
@@ -728,7 +807,7 @@ sl_t sl_format_quick( sl_p sp, const char* fmt, ... );
 /**
  * Variable Arguments (VA) version of sl_format_quick().
  *
- * @param sp  Slinky Reference.
+ * @param sp  Pointer to Slinky.
  * @param fmt Quick Format.
  * @param ap  VA list.
  *
@@ -926,13 +1005,27 @@ sl_t sl_swap_chars( sl_t ss, char f, char t );
  *
  * "f" and "t" can be either Slinky or CSTR.
  *
- * @param sp Slinky Reference.
+ * @param sp Pointer to Slinky.
  * @param f  From string.
  * @param t  To string.
  *
  * @return Slinky
  */
 sl_t sl_map_str( sl_p sp, const char* f, const char* t );
+
+
+/**
+ * Map (replace) part of Slinky with "to".
+ *
+ * @param sp      Pointer to Slinky.
+ * @param from_a  Replace part start index.
+ * @param from_b  Replace part end index (exclusive).
+ * @param to      New part.
+ * @param to_len  New part length.
+ *
+ * @return Slinky
+ */
+sl_t sl_map_part( sl_p sp, sl_size_t from_a, sl_size_t from_b, const char* to, sl_size_t to_len );
 
 
 /**
@@ -976,6 +1069,24 @@ sl_t sl_read_file( const char* filename );
 
 
 /**
+ * Read complete file and return Slinky containing the file content.
+ *
+ * Returned Slinky starts with left number of zeros and the left zeros
+ * are also part of Slinky length. Right padding adds only to the
+ * allocation, but does affect the Slinky length. Typical usage has
+ * left=0 and right>0.
+ *
+ * @param filename Name of file.
+ * @param left     Number of extra bytes for left pad.
+ * @param right    Number of extra bytes for right pad.
+ *
+ * @return Slinky.
+ */
+sl_t sl_read_file_with_pad( const char* filename, sl_size_t left, sl_size_t right );
+// sl_t sl_read_file_plus_extra( const char* filename, sl_size_t extra );
+
+
+/**
  * Write Slinky content to file.
  *
  * @param ss       Slinky including file content.
@@ -993,7 +1104,18 @@ sl_t sl_write_file( sl_t ss, const char* filename );
  *
  * @param ss Slinky.
  */
-void sl_print( sl_t ss );
+// void sl_print( sl_t ss );
+void sl_print( const char* fmt, ... );
+
+
+/**
+ * Print Slinky with write to file.
+ *
+ * Clear Slinky content.
+ *
+ * @param ss Slinky.
+ */
+void sl_write( const int fd, const char* fmt, ... );
 
 
 /**
@@ -1018,13 +1140,76 @@ void sl_set_local( sl_t ss, int val );
 /**
  * Return Slinky local mode.
  *
- * Current allocatin is not freed if resize occurs.
+ * Current allocation is not freed if resize occurs.
  *
  * @param ss Slinky.
  *
  * @return 1 if local (else 0).
  */
 int sl_get_local( sl_t ss );
+
+
+/**
+ * Return Slinky Reference.
+ *
+ * @param str CSTR to string start.
+ * @param len Length of the reference.
+ *
+ * @return Slinky Reference.
+ */
+sr_s sr_new( const char* str, sl_size_t len );
+
+
+/**
+ * Return Slinky Reference.
+ *
+ * @param str CSTR to string start (with NULL terminator).
+ *
+ * @return Slinky Reference.
+ */
+sr_s sr_new_c( const char* str );
+
+
+/**
+ * Return Slinky Reference string content.
+ *
+ * @param sr Slinky Reference.
+ *
+ * @return CSTR content.
+ */
+const char* sr_text( sr_s sr );
+
+
+/**
+ * Return Slinky Reference string length.
+ *
+ * @param sr Slinky Reference.
+ *
+ * @return Length of CSTR content.
+ */
+sl_size_t sr_length( sr_s sr );
+
+
+/**
+ * Compare two Slinky References.
+ *
+ * @param s1  One.
+ * @param s2  The other.
+ *
+ * @return 0 for match, and non-zero for mismatch.
+ */
+int sr_compare( sr_s s1, sr_s s2 );
+
+
+/**
+ * Compare two Slinky References upto shared lenght.
+ *
+ * @param s1  One.
+ * @param s2  The other.
+ *
+ * @return 0 for match, and non-zero for mismatch.
+ */
+int sr_compare_full( sr_s s1, sr_s s2 );
 
 
 #endif
