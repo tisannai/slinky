@@ -258,6 +258,11 @@ void test_content( void )
     slfmq( &s, "_%s_%p", t1, 7 );
     TEST_ASSERT_TRUE( !strcmp( s, "_text1_" ) );
 
+    slclr( s );
+    slfmq( &s, "_%ar 10s_%al010i", t1, 1000 );
+    // printf( "%s\n", s );
+    TEST_ASSERT_TRUE( !strcmp( s, "_text1     _0000001000" ) );
+
     sldel( &s );
     sldel( &s2 );
 }
