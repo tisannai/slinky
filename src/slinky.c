@@ -2202,6 +2202,7 @@ static sl_size_t sl_va_format_quick_size( const char* fmt, va_list ap )
     //     va_copy( coap, ap );
 
     sl_size_t size = 0;
+    sl_size_t max_size = 0;
 
 
     /* ------------------------------------------------------------
@@ -2226,6 +2227,8 @@ static sl_size_t sl_va_format_quick_size( const char* fmt, va_list ap )
                 switch ( *c ) {
 
                     case '!': {
+                        max_size = size;
+                        size = 0;
                         break;
                     }
 
@@ -2324,6 +2327,10 @@ static sl_size_t sl_va_format_quick_size( const char* fmt, va_list ap )
     }
 
     va_end( ap );
+
+    if ( max_size > size ) {
+        size = max_size;
+    }
 
     return size;
 }
