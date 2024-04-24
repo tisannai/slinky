@@ -1441,7 +1441,8 @@ sl_t sl_read_file_with_pad( const char* filename, sl_size_t left, sl_size_t righ
     if ( fd == -1 )
         return NULL; // GCOV_EXCL_LINE
     read( fd, &ss[ left ], size );
-    ss[ size + left ] = 0;
+    /* Zero the tail. */
+    memset( &ss[ size + left ], 0, right + 1 );
     sl_len( ss ) = size + left;
     close( fd );
 

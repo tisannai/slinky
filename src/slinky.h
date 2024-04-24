@@ -22,7 +22,7 @@ void sl_set_memtun( mt_t mt );
 mt_t sl_get_memtun( void );
 #endif
 
-/** Framer library version. */
+/** Slinky library version. */
 extern const char* slinky_version;
 
 
